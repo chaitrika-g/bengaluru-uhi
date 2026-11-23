@@ -24,3 +24,13 @@ RURAL_RING_KM = (22, 30)      # "rural reference" ring, outside the city's main 
 
 GREEN_NDVI = 0.4              # NDVI threshold for "green cover" (dense vegetation / tree canopy)
 GRID_KM = 1                   # cell size for the spatial change analysis
+
+# ---------------------------------------------------------------- Ward-level panel (v2)
+WARDS_KML = DATA / "raw" / "bbmp_wards_225.kml"
+SEASONS = {  # Dry seasons only: Landsat is largely clouded out over Bengaluru Jun-Dec
+    "winter": ("01-01", "02-28"),   # dry winter
+    "summer": ("03-01", "05-31"),   # pre-monsoon summer
+}
+S2_RES = 20                        # Sentinel-2 NDVI resolution (m); bands are 10 m native
+S2_MAX_CLOUD = 20
+MIN_VALID_PCT = 60                 # a ward-season needs >=60% clear pixels to enter the panel

@@ -1,3 +1,9 @@
 data/*.nc
+data/seasonal/
+data/*.duckdb
+data/*.log
+data/wards.parquet
+data/ward_pm25.parquet
+data/raw/air_quality.csv
 __pycache__/
 .env

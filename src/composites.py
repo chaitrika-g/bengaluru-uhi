@@ -35,14 +35,16 @@ def catalog():
     return pystac_client.Client.open(C.STAC_URL, modifier=pc.sign_inplace)
 
 
-def year_composite(cat, year, bounds):
+def year_composite(cat, year, bounds, season=C.SEASON):
     items = list(cat.search(
         collections=["landsat-c2-l2"], bbox=C.BBOX,
-        datetime=f"{year}-{C.SEASON[0]}/{year}-{C.SEASON[1]}",
+        datetime=f"{year}-{season[0]}/{year}-{season[1]}",
         query={"eo:cloud_cover": {"lt": C.MAX_SCENE_CLOUD},
                "platform": {"in": ["landsat-8", "landsat-9"]}},
     ).items())
-    print(f"{year}: {len(items)} scenes")
+    print(f"{year} {season}: {len(items)} Landsat scenes")
+    if not items:
+        raise RuntimeError(f"No Landsat scenes for {year} {season}")
     stack = stackstac.stack(
         items, assets=["red", "nir08", "lwir11", "qa_pixel"], epsg=C.EPSG,
         resolution=C.RES, bounds=bounds, rescale=False, fill_value=np.uint16(0),

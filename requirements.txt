@@ -12,3 +12,8 @@ scipy
 statsmodels
 matplotlib
 pyproj
+duckdb
+geopandas
+pyarrow
+plotly>=6
+requests
