@@ -2,6 +2,11 @@
 import os
 from pathlib import Path
 
+# Show a progress bar for every satellite download/compute that takes more than 2 s
+from dask.diagnostics import ProgressBar as _ProgressBar
+
+_ProgressBar(minimum=2, dt=1).register()
+
 # Troubleshooting switch: UHI_SINGLE_THREADED=1 makes all raster reads run on one thread.
 # Slower, but avoids GDAL thread-safety crashes (segfaults) seen with some macOS builds.
 if os.environ.get("UHI_SINGLE_THREADED") == "1":
