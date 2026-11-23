@@ -2,7 +2,8 @@
 
 Sources (first one available wins):
   1. data/raw/air_quality.csv  - e.g. a CPCB CCR export, columns: station, lat, lon, date, pm25
-  2. OpenAQ v3 API              - set OPENAQ_API_KEY (free key: https://explore.openaq.org/register)
+  2. OpenAQ v3 API              - key given at RUNTIME only: OPENAQ_API_KEY env var for the run,
+                                  or a hidden prompt (free key: https://explore.openaq.org/register)
 If neither is available the step is skipped and the panel is built without PM2.5.
 
 Caveat (also in docs/methodology.md): Bengaluru has roughly a dozen regulatory monitors for 225
@@ -10,8 +11,10 @@ wards. IDW produces a smooth surface; between-station variation is not observed.
 carries the distance to the nearest station and a leave-one-out cross-validation error so that
 downstream users can see how uncertain each estimate is.
 """
+import getpass
 import logging
 import os
+import sys
 import time
 
 import geopandas as gpd
@@ -70,14 +73,38 @@ def from_openaq(api_key) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def runtime_api_key() -> str | None:
+    """OpenAQ key, supplied at RUNTIME only - never read from or written to any file.
+
+    1. OPENAQ_API_KEY in the environment of this process, e.g. for a single command:
+           OPENAQ_API_KEY=<your-key> python air_quality.py
+    2. Otherwise, if running in a terminal, a hidden prompt (input is not echoed; Enter skips).
+    The key lives only in memory for this run. It is never logged, saved, or put in a URL.
+    """
+    key = os.environ.get("OPENAQ_API_KEY", "").strip()
+    if key:
+        log.info("Using OpenAQ key from the runtime environment")
+        return key
+    if sys.stdin.isatty():
+        try:
+            key = getpass.getpass("OpenAQ API key (hidden; press Enter to skip air quality): ").strip()
+        except (EOFError, KeyboardInterrupt):  # Ctrl-D / Ctrl-C: skip, don't crash the pipeline
+            print()
+            return None
+        return key or None
+    return None
+
+
 def load_readings() -> pd.DataFrame | None:
     if LOCAL_CSV.exists():
         log.info("Using local file %s", LOCAL_CSV)
         df = pd.read_csv(LOCAL_CSV)
-    elif os.environ.get("OPENAQ_API_KEY"):
-        df = from_openaq(os.environ["OPENAQ_API_KEY"])
+    elif key := runtime_api_key():
+        df = from_openaq(key)
+        del key
     else:
-        log.warning("No air-quality source (no %s, no OPENAQ_API_KEY) - skipping step", LOCAL_CSV.name)
+        log.warning("No air-quality source (no %s, no OpenAQ key given at runtime) - skipping step",
+                    LOCAL_CSV.name)
         return None
     missing = {"station", "lat", "lon", "date", "pm25"} - set(df.columns)
     if missing:
