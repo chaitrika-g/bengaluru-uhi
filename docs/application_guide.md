@@ -25,7 +25,7 @@ The project also ends with the questions you *cannot yet answer*: costs, distrib
 ## CV / résumé line
 
 > **Independent research: Green Cover Loss and Urban Heat in Bengaluru (2022–2026)** · github.com/[you]/bengaluru-uhi
-> Built a reproducible geospatial pipeline (Python, STAC, xarray) over 80+ Landsat and 120+ MODIS scenes. Estimated with a two-way fixed-effects panel that each 10 pp of green cover lost raises local surface temperature by about 0.7 °C (624 neighbourhood cells; robust across specifications).
+> Built a reproducible, validated geospatial pipeline (Python, STAC, xarray, DuckDB) over Landsat 8/9, Sentinel-2 and MODIS imagery for 225 BBMP wards, 2022–2026. Two-way fixed-effects panels show that each 10 pp of green cover lost raises summer surface temperature by about 0.7–1.0 °C, robust across 1 km grid and ward-level specifications. Published an interactive ward heat map.
 
 ## Interview questions to prepare
 

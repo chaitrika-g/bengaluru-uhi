@@ -1,6 +1,7 @@
 """Step 5b - Ward maps.
 
-  outputs/maps/ward_explorer.html   interactive choropleth (Plotly + MapLibre, no token needed):
+  outputs/maps/ward_explorer.html   interactive choropleth (Plotly SVG geo: no WebGL, no map tiles,
+                                    works offline and on GitHub Pages):
                                     layer switcher, hover details, top-10 heat-island wards outlined
   outputs/figures/fig5_ward_maps.png static version for the README
 """
@@ -52,31 +53,39 @@ def interactive(g, top):
     for i, (col, title, cs, sym, unit) in enumerate(LAYERS):
         v = g[col]
         lim = float(np.nanpercentile(v.abs(), 98)) if sym else None
-        fig.add_trace(go.Choroplethmap(
+        fig.add_trace(go.Choropleth(
             geojson=gj, locations=g.ward_id, z=v, colorscale=cs,
             zmin=-lim if sym else float(np.nanpercentile(v, 2)), zmax=lim if sym else float(np.nanpercentile(v, 98)),
             marker_line_width=0.4, marker_line_color="#ffffff", marker_opacity=0.85,
             customdata=cd, hovertemplate=hover, visible=(i == 0), name=title,
             colorbar=dict(title=dict(text=unit), thickness=12, len=0.6)))
     tg = g[g.ward_id.isin(top.ward_id)]
-    fig.add_trace(go.Choroplethmap(  # top-10 outline
+    fig.add_trace(go.Choropleth(  # top-10 outline
         geojson=gj, locations=tg.ward_id, z=np.zeros(len(tg)), showscale=False,
         colorscale=[[0, "rgba(0,0,0,0)"], [1, "rgba(0,0,0,0)"]],
         marker_line_width=2.5, marker_line_color=INK, hoverinfo="skip", name="Top 10 heat wards"))
+    tg = tg.set_index("ward_id").loc[top.ward_id].reset_index()  # keep rank order
     c = tg.to_crs(cfg.EPSG).representative_point().to_crs(4326)
-    fig.add_trace(go.Scattermap(lat=c.y, lon=c.x, mode="text", text=tg.ward_name,
-                                textfont=dict(size=11, color=INK), hoverinfo="skip", name="labels"))
+    fig.add_trace(go.Scattergeo(lat=c.y, lon=c.x, mode="markers+text", text=[str(i) for i in range(1, 11)],
+                                marker=dict(size=15, color="#ffffff", line=dict(width=1.5, color=INK)),
+                                textfont=dict(size=9, color=INK), hoverinfo="skip", name="rank"))
+    key = "<b>10 hottest wards</b> (vs city avg, summer 2025–26)<br>" + "<br>".join(
+        f"{i}. {r.ward_name}  +{r.lst_rel_late:.1f} °C" for i, r in enumerate(top.itertuples(), 1))
     n = len(LAYERS)
     buttons = [dict(label=t.split(",")[0].split("(")[0].strip()[:38], method="update",
                     args=[{"visible": [j == i for j in range(n)] + [True, True]}, {"title.text": t}])
                for i, (_, t, *_r) in enumerate(LAYERS)]
     fig.update_layout(
         title=dict(text=LAYERS[0][1], x=0.01, font=dict(size=16)),
-        map=dict(style="carto-positron", center=dict(lat=12.975, lon=77.6), zoom=10),
+        geo=dict(fitbounds="locations", visible=False, projection_type="mercator", bgcolor=SURF),
+        height=760,
         updatemenus=[dict(buttons=buttons, direction="down", x=0.01, y=0.99, xanchor="left", yanchor="top",
                           bgcolor="#ffffff", bordercolor="#cccccc")],
         margin=dict(l=0, r=0, t=48, b=28), showlegend=False, paper_bgcolor=SURF,
-        annotations=[dict(text="Bold outline = 10 hottest wards relative to city average (summer 2025–26). "
+        annotations=[dict(text=key, x=0.01, y=0.9, xref="paper", yref="paper", showarrow=False, align="left",
+                          xanchor="left", yanchor="top", font=dict(size=11, color=INK),
+                          bgcolor="rgba(255,255,255,0.85)", bordercolor="#dddddd", borderpad=6),
+                     dict(text="Bold outline = 10 hottest wards relative to city average (summer 2025–26). "
                                "Sources: Landsat 8/9, Sentinel-2, MODIS via Microsoft Planetary Computer; "
                                "BBMP 225-ward boundaries via OpenCity.",
                           x=0.01, y=0.005, xref="paper", yref="paper", showarrow=False,
@@ -88,7 +97,7 @@ def interactive(g, top):
 
 
 def static(g, top):
-    fig, axes = plt.subplots(1, 2, figsize=(12, 6.2))
+    fig, axes = plt.subplots(1, 2, figsize=(12, 5.4))
     heat = LinearSegmentedColormap.from_list("h", [c for _, c in DIV_WARM_BAD])
     loss = LinearSegmentedColormap.from_list("l", [c for _, c in DIV_LOSS_BAD])
     a = float(np.nanpercentile(g.lst_rel_late.abs(), 98))

@@ -1,0 +1,149 @@
+{
+  "panel": {
+    "ward_seasons_total": 2250,
+    "in_sample": 2250,
+    "wards": 225
+  },
+  "models": [
+    {
+      "model": "M1 Two-way FE (all dry seasons): 0.1 NDVI drop -> \u00b0C",
+      "effect": 0.8147910192919808,
+      "se": 0.1034667988920494,
+      "ci95_low": 0.6119998198679153,
+      "ci95_high": 1.0175822187160464,
+      "p": 3.410069389208426e-15,
+      "n_obs": 2250,
+      "n_wards": 225
+    },
+    {
+      "model": "M2 Two-way FE: 10 pp green-cover loss -> \u00b0C",
+      "effect": 0.3655699089467191,
+      "se": 0.04733894601036396,
+      "ci95_low": 0.2727872797003197,
+      "ci95_high": 0.45835253819311855,
+      "p": 1.1416643563326431e-14,
+      "n_obs": 2250,
+      "n_wards": 225
+    },
+    {
+      "model": "M3/4 winter only: 0.1 NDVI drop -> \u00b0C",
+      "effect": 0.23858831020622795,
+      "se": 0.10544416281205925,
+      "ci95_low": 0.031921548714614105,
+      "ci95_high": 0.4452550716978418,
+      "p": 0.02365430407188331,
+      "n_obs": 1125,
+      "n_wards": 225
+    },
+    {
+      "model": "M3/4 summer only: 0.1 NDVI drop -> \u00b0C",
+      "effect": 1.913024816739808,
+      "se": 0.3345368684047505,
+      "ci95_low": 1.2573446031656816,
+      "ci95_high": 2.5687050303139345,
+      "p": 1.0751439306237583e-08,
+      "n_obs": 1125,
+      "n_wards": 225
+    },
+    {
+      "model": "M2s summer only: 10 pp green-cover loss -> \u00b0C",
+      "effect": 1.0173962100726694,
+      "se": 0.1296961407830061,
+      "ci95_low": 0.7631964452041409,
+      "ci95_high": 1.2715959749411978,
+      "p": 4.348198897488462e-15,
+      "n_obs": 1125,
+      "n_wards": 225
+    },
+    {
+      "model": "Pooled OLS, no ward FE (for comparison)",
+      "effect": 0.6858970890208915,
+      "se": 0.027574823473262816,
+      "ci95_low": 0.6318514281332468,
+      "ci95_high": 0.7399427499085363,
+      "p": 1.4212975566512238e-136,
+      "n_obs": 2250,
+      "n_wards": 225
+    }
+  ],
+  "city_summer_by_year": [
+    {
+      "year": 2022,
+      "lst": 36.97999954223633,
+      "green": 21.663,
+      "ndvi": 0.251
+    },
+    {
+      "year": 2023,
+      "lst": 38.61399841308594,
+      "green": 22.056,
+      "ndvi": 0.256
+    },
+    {
+      "year": 2024,
+      "lst": 39.95199966430664,
+      "green": 16.593,
+      "ndvi": 0.221
+    },
+    {
+      "year": 2025,
+      "lst": 38.4370002746582,
+      "green": 23.41,
+      "ndvi": 0.256
+    },
+    {
+      "year": 2026,
+      "lst": 39.691001892089844,
+      "green": 20.379,
+      "ndvi": 0.24
+    }
+  ],
+  "wards_losing_green_gt2pp_pct": 16.444444444444446,
+  "wards_gaining_green_gt2pp_pct": 12.444444444444445,
+  "longdiff_ward": {
+    "slope_c_per_10pp": 0.9874258604789985,
+    "se": 0.2035288114847979
+  },
+  "equity_spearman": {
+    "lst_rel_late vs sc_st_share_pct": {
+      "spearman_rho": 0.06020016856300043,
+      "p": 0.3687653524113546,
+      "n": 225
+    },
+    "green_cover_pct_late vs sc_st_share_pct": {
+      "spearman_rho": 0.30346291613990733,
+      "p": 3.5454711704034126e-06,
+      "n": 225
+    },
+    "d_green_cover_pct vs sc_st_share_pct": {
+      "spearman_rho": -0.05336388537715972,
+      "p": 0.42570216884633105,
+      "n": 225
+    },
+    "d_lst_rel vs sc_st_share_pct": {
+      "spearman_rho": 0.007286135693215341,
+      "p": 0.9134525445872161,
+      "n": 225
+    },
+    "lst_rel_late vs pop_density_per_km2": {
+      "spearman_rho": 0.19166561314791405,
+      "p": 0.003904530434743936,
+      "n": 225
+    },
+    "green_cover_pct_late vs pop_density_per_km2": {
+      "spearman_rho": -0.5778034134007587,
+      "p": 1.9477750897956994e-21,
+      "n": 225
+    },
+    "d_green_cover_pct vs pop_density_per_km2": {
+      "spearman_rho": 0.3471934260429836,
+      "p": 8.985545832639287e-08,
+      "n": 225
+    },
+    "d_lst_rel vs pop_density_per_km2": {
+      "spearman_rho": -0.2741097766540245,
+      "p": 3.06110180955156e-05,
+      "n": 225
+    }
+  }
+}

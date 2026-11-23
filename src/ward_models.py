@@ -52,6 +52,9 @@ def models(p):
         q = p[p.season == s]
         out.append(summarise(fe("mean_lst_c ~ mean_ndvi + C(ward_id) + C(year)", q),
                              "mean_ndvi", -0.1, f"M3/4 {s} only: 0.1 NDVI drop -> °C", q.ward_id.nunique()))
+    q = p[p.season == "summer"]
+    out.append(summarise(fe("mean_lst_c ~ green_cover_pct + C(ward_id) + C(year)", q),
+                         "green_cover_pct", -10, "M2s summer only: 10 pp green-cover loss -> °C", q.ward_id.nunique()))
     pooled = smf.ols("mean_lst_c ~ mean_ndvi + C(period)", data=p).fit(cov_type="HC1")
     out.append(summarise(pooled, "mean_ndvi", -0.1, "Pooled OLS, no ward FE (for comparison)", nw))
 

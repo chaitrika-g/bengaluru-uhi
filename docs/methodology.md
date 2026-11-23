@@ -68,3 +68,44 @@ By day, Bengaluru's built core was 1.0–3.8 °C *cooler* than the rural ring in
 5. **MODIS orbit drift** since 2022 shifts overpass times. Treat absolute night LST trends with caution; urban-minus-rural differences are more robust.
 6. **Fixed land-cover mask.** WorldCover 2021 is used for zoning, so new construction after 2021 is not reflected in the urban/rural masks.
 7. **Identification.** Two-way fixed effects rule out time-invariant and city-wide confounders, but not time-varying local ones (for example, construction both clearing trees and adding dark surfaces). β should be read as the heat associated with green loss *as it actually happened in Bengaluru*, development included, not the pure physical effect of a tree.
+
+## 7. Part B: ward-level panel
+
+| Choice | Value | Why |
+|---|---|---|
+| Unit | 225 BBMP wards, 2023 delimitation (KML from OpenCity) | Administrative unit for policy and census data |
+| Seasons | Dry winter (January–February) and summer (March–May) | Landsat is largely clouded out from June to December, and missing observations would track the weather |
+| LST | Landsat 8/9 ST_B10, 60 m, seasonal median | Same processing as Part A |
+| NDVI and green cover | Sentinel-2 L2A B04/B08 at 20 m; SCL classes 4/5/6 kept; −1000 DN offset removed for processing baseline ≥ 04.00 | Sharper than Landsat; captures street trees and small parks |
+| Zonal statistic | Mean of pixels whose centre falls inside the ward polygon | The smallest ward (0.3 km²) still holds about 80 Landsat pixels |
+| Inclusion | ≥ 60 % valid pixels for both LST and NDVI | All 2,250 ward-seasons qualified |
+| Night LST | MODIS 1 km, bilinear to 250 m, summer only | **Approximate:** many wards are smaller than one MODIS pixel |
+
+**Ingestion checks (`wards.py`):**
+- 225 features with unique ids and no empty geometries.
+- 36 self-intersecting polygons repaired with `make_valid`.
+- Areas computed in EPSG:32643 match the file's `ward_area` field to within 0.01 %.
+
+**Panel checks (`panel.py`, stored in the `validation_log` table):**
+- Row count equals wards × years × seasons.
+- Primary key is unique.
+- LST, NDVI and green-cover values fall within physical ranges.
+- Coverage thresholds are met.
+- NDVI and LST correlate negatively (a sanity check).
+
+**Models (`ward_models.py`):**
+- Two-way fixed effects (ward and year × season); standard errors clustered by ward.
+- Season-specific models (ward and year fixed effects).
+- A pooled comparison model without ward fixed effects.
+- A ward-level long difference from 2022–23 to 2025–26.
+- Descriptive Spearman correlations with population density and SC/ST share.
+
+**PM2.5 (`air_quality.py`):**
+- IDW with power 2, from station seasonal means (≥ 20 valid days per station-season) to ward representative points.
+- Leave-one-out RMSE and distance to the nearest station are stored for each estimate.
+- PM2.5 is used as an outcome and a sensitivity check, never as a control in the headline model.
+
+**Additional limitations:**
+- Ward population and SC/ST counts come from the delimitation file and are Census-2011-based. Treat equity results as indicative.
+- Bengaluru's governance changed in 2025 with the Greater Bengaluru Authority. These boundaries are the 225-ward BBMP delimitation and may not match current corporation boundaries.
+- Seasonal medians from Sentinel-2 at 20 m and Landsat at 60 m are not directly comparable to the Part A NDVI. Compare effect *directions* across parts, not magnitudes.

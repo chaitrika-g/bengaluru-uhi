@@ -1,0 +1,7 @@
+model,effect,se,ci95_low,ci95_high,p,n_obs,n_wards
+M1 Two-way FE (all dry seasons): 0.1 NDVI drop -> °C,0.8148,0.1035,0.612,1.0176,0.0,2250,225
+M2 Two-way FE: 10 pp green-cover loss -> °C,0.3656,0.0473,0.2728,0.4584,0.0,2250,225
+M3/4 winter only: 0.1 NDVI drop -> °C,0.2386,0.1054,0.0319,0.4453,0.0237,1125,225
+M3/4 summer only: 0.1 NDVI drop -> °C,1.913,0.3345,1.2573,2.5687,0.0,1125,225
+M2s summer only: 10 pp green-cover loss -> °C,1.0174,0.1297,0.7632,1.2716,0.0,1125,225
+"Pooled OLS, no ward FE (for comparison)",0.6859,0.0276,0.6319,0.7399,0.0,2250,225
