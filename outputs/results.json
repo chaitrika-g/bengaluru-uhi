@@ -1,0 +1,74 @@
+{
+  "twfe": {
+    "coef_lst_per_10pp_green": -0.694105133686334,
+    "se": 0.04623673141667489,
+    "p": 6.12855231141236e-51,
+    "ci95": [
+      -0.7847274620258683,
+      -0.6034828053467995
+    ],
+    "n_cells": 624,
+    "n_obs": 3120
+  },
+  "pooled": {
+    "coef_lst_per_10pp_green": -0.4681343257226288,
+    "se": 0.010933141546658656,
+    "r2": 0.605403597794506
+  },
+  "long_diff": {
+    "coef_lst_per_10pp_green": -0.79663220775399,
+    "se": 0.0725920600338511,
+    "p": 5.091276490020262e-28,
+    "r2": 0.3340378837730378,
+    "n_cells": 624
+  },
+  "quartiles": [
+    {
+      "green_change_group": "Largest loss",
+      "d_green_pp": -13.73,
+      "d_lst_rel_c": 0.8199999928474426,
+      "cells": 156
+    },
+    {
+      "green_change_group": "Q2",
+      "d_green_pp": -4.74,
+      "d_lst_rel_c": 0.0,
+      "cells": 156
+    },
+    {
+      "green_change_group": "Q3",
+      "d_green_pp": -1.47,
+      "d_lst_rel_c": -0.3100000023841858,
+      "cells": 156
+    },
+    {
+      "green_change_group": "Gain / least loss",
+      "d_green_pp": 1.57,
+      "d_lst_rel_c": -0.5099999904632568,
+      "cells": 156
+    }
+  ],
+  "cells_losing_green_pct": 57.85256410256411,
+  "cells_gaining_green_pct": 4.807692307692308,
+  "robustness": {
+    "cropland_lt_10pct": {
+      "coef_lst_per_10pp_green": -0.6477588292962072,
+      "se": 0.08889026546625156,
+      "n_cells": 454
+    },
+    "built_gt_50pct": {
+      "coef_lst_per_10pp_green": -0.7069993936539347,
+      "se": 0.05205589954301748,
+      "n_cells": 461
+    }
+  },
+  "headline": {
+    "core_lst_change_c": 2.743000000000002,
+    "core_green_cover_change_pp": -6.224,
+    "night_suhi_mean_c": 2.3400000000000003,
+    "day_suhi_landsat_mean_c": -1.9204,
+    "green_cooling_mean_c": 2.2164,
+    "lst_trend_c_per_yr": 0.5877000000000002,
+    "lst_trend_p": 0.20087751227576675
+  }
+}

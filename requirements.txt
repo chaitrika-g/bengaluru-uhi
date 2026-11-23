@@ -1,0 +1,14 @@
+pystac-client
+planetary-computer
+stackstac
+rasterio
+rioxarray
+xarray
+netCDF4
+dask
+numpy
+pandas
+scipy
+statsmodels
+matplotlib
+pyproj

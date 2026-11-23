@@ -1,0 +1,3 @@
+data/*.nc
+__pycache__/
+.env
