@@ -1,5 +1,12 @@
 """Study-wide configuration. Every analytical choice lives here so it is explicit and reproducible."""
+import os
 from pathlib import Path
+
+# Troubleshooting switch: UHI_SINGLE_THREADED=1 makes all raster reads run on one thread.
+# Slower, but avoids GDAL thread-safety crashes (segfaults) seen with some macOS builds.
+if os.environ.get("UHI_SINGLE_THREADED") == "1":
+    import dask
+    dask.config.set(scheduler="synchronous")
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data"
