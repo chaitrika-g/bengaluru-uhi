@@ -3,6 +3,13 @@
 set -euo pipefail
 cd "$(dirname "$0")/src"
 
+python -c 'import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)' || {
+  echo "ERROR: Python 3.10+ is required, found $(python --version 2>&1)."
+  echo "Install Python 3.12 from python.org, then recreate the environment:"
+  echo "  rm -rf .venv && python3.12 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt"
+  exit 1
+}
+
 echo "== Part A: city-wide grid study (Landsat summer composites, MODIS night) =="
 python composites.py   # Landsat LST + NDVI yearly summer composites, WorldCover mask
 python modis.py        # MODIS day/night LST
