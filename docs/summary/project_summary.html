@@ -70,13 +70,14 @@
     <li><b>Greenery's cooling value is concentrated in summer</b>, about 8× larger per unit of vegetation than in the dry winter,
       which matters for how urban trees should be valued.</li>
     <li><b>Bengaluru's heat island is a night-time phenomenon.</b> By day the city is <i>cooler</i> than the dry pre-monsoon
-      farmland around it, but at night it stays 2.1–2.5 °C warmer, every year. This is the heat residents without
-      air-conditioning cannot escape.</li>
-    <li><b>The hottest wards form an industrial belt.</b> Six of the ten hottest wards (2.0–2.6 °C above the city average) lie on
-      the western edge around Peenya, with only 5–18% green cover. Green cover is being lost mainly on the urban fringe.</li>
+      farmland around it, but at night it stays 2.1–2.5 °C warmer, every year.</li>
+    <li><b>The hottest wards form an industrial belt</b> on the western edge around Peenya: six of the ten hottest wards,
+      2.0–2.6 °C above the city average, with only 5–18% green cover.</li>
+    <li><b>Who bears it:</b> 3.2 million people live in wards that warmed about +0.24 °C from lost greenery, and the least dense
+      fringe wards carry <b>73%</b> of that burden. Cooling the 10 hottest wards to the city average would need roughly
+      <b>3.6× their current green cover</b>, so greening alone is unlikely to be enough.</li>
     <li><b>Air quality (suggestive):</b> wards that lost vegetation also saw higher interpolated PM2.5 (+6 µg/m³ per 0.1 drop
-      in vegetation index, using a fixed set of 7 monitoring stations; placebo test p = 0.025). It's an association, likely
-      shared with construction activity.</li>
+      in vegetation index, fixed set of 7 stations; placebo p = 0.025). It's an association, likely shared with construction.</li>
   </ul>
 
   <figure>
@@ -105,12 +106,11 @@
     <div>
       <h2>Why the result is credible</h2>
       <ul>
-        <li><b>Two-way fixed effects:</b> each neighbourhood is compared with <i>itself</i> over time, which removes permanent
-          differences such as density and lakes, and year effects remove city-wide weather such as the 2024 drought.</li>
+        <li><b>Two-way fixed effects:</b> each neighbourhood is compared with <i>itself</i> over time (removing permanent
+          differences), and year effects remove city-wide weather such as the 2024 drought.</li>
         <li><b>Robustness:</b> results replicate across grid and ward units, two satellites and several samples.</li>
-        <li><b>Honest inference:</b> a permutation (placebo) test showed that ordinary p-values were over-confident for
-          interpolated pollution data; I report the stricter test.</li>
-        <li>The raw 5-year trend is <i>not</i> statistically significant (p = 0.20), so I don't claim it as one.</li>
+        <li><b>Honest inference:</b> a placebo test showed ordinary p-values were over-confident for interpolated pollution
+          data, so I report the stricter test; the raw 5-year trend (p = 0.20) is not claimed as significant.</li>
       </ul>
     </div>
     <div>
@@ -120,19 +120,22 @@
         <li>The vegetation index measures greenness, not trees specifically.</li>
         <li>Five years is short; estimates are associations under fixed-effects assumptions, not experiments.</li>
         <li>Air-quality data are sparse (5 of 10 seasons usable).</li>
+        <li>Restoration figures extrapolate beyond the observed ward changes (±11 pp).</li>
         <li>Ward population data are Census-2011-based.</li>
       </ul>
     </div>
   </div>
 
-  <figure style="margin:2px auto 0; width:80%">
-    <img src="../../outputs/figures/fig5_ward_maps.png" alt="Two ward maps: summer heat relative to the city average, and change in green cover by ward">
+  <figure style="margin:3px auto 0; width:84%">
+    <img src="../../outputs/figures/fig6_economics.png" alt="Bar chart of warming burden by ward density quartile, and horizontal bars of hectares of green cover needed to cool the 10 hottest wards">
   </figure>
 
   <h2>Why this leads me to environmental economics</h2>
-  <p>The project measures <i>how much</i> hotter the city gets when it loses greenery, but not what that costs or who pays.
+  <p>A first economic step is in place (above). I deliberately stopped short of a rupee figure: published damage estimates
+  (≈2% lower factory output per +1 °C in India; Somanathan et al., 2021) are per degree of <i>air</i> temperature, while I
+  measure <i>surface</i> temperature, and that link isn't established yet.
   A tree's cooling is an <b>unpriced public good</b>: the owner who removes it captures the private gain while the neighbourhood
-  bears the heat, a textbook externality. The questions I now want to answer need environmental economics:
+  bears the heat, a textbook externality. What I now want to learn to answer:
   <b>What is the shadow price of urban green cover in Indian cities? How are heat costs (lost labour productivity, energy
   demand, health) distributed across income groups? Which instruments, from compensatory planting rules to levies on canopy loss,
   would correct the market failure?</b> As a data engineer I can build the evidence base; through this degree I want to learn to
