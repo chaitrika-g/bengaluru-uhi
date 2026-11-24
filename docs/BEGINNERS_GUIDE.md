@@ -10,6 +10,147 @@ This guide explains **every concept and every file** in the repo, assuming no ba
 - **Part 6:** interview cheat sheet.
 - **Part 7:** Git, GitHub and the website.
 
+**Lost?** Use the **Contents** below to jump to any section, or the **Term index (A–Z)** to find where a word like *NDVI*, *p-value* or *fixed effects* is explained.
+
+
+<!-- INDEX:START -->
+## Contents
+
+- [Part 0: Start here, from data engineer to data scientist](#part-0-start-here-from-data-engineer-to-data-scientist)
+  - [0.1 This project, translated into data-engineering terms](#01-this-project-translated-into-data-engineering-terms)
+  - [0.2 Averages: mean vs median](#02-averages-mean-vs-median)
+  - [0.3 Spread: how much values vary](#03-spread-how-much-values-vary)
+  - [0.4 Correlation: do two columns move together?](#04-correlation-do-two-columns-move-together)
+  - [0.5 Regression: putting a number on the relationship](#05-regression-putting-a-number-on-the-relationship)
+  - [0.6 How sure are we? Standard error, confidence interval and p-value](#06-how-sure-are-we-standard-error-confidence-interval-and-p-value)
+  - [0.7 Confounding, and why we need fixed effects](#07-confounding-and-why-we-need-fixed-effects)
+  - [0.8 Other checks, in one line each](#08-other-checks-in-one-line-each)
+  - [0.9 If you want to go further](#09-if-you-want-to-go-further)
+- [Part 1: The core ideas](#part-1-the-core-ideas)
+  - [1.1 The question](#11-the-question)
+  - [1.2 How satellites "see"](#12-how-satellites-see)
+  - [1.3 NDVI: measuring greenery](#13-ndvi-measuring-greenery)
+  - [1.4 LST: measuring heat](#14-lst-measuring-heat)
+  - [1.5 Urban Heat Island (UHI)](#15-urban-heat-island-uhi)
+  - [1.6 The satellites and datasets](#16-the-satellites-and-datasets)
+  - [1.7 Clouds: the biggest practical problem](#17-clouds-the-biggest-practical-problem)
+  - [1.8 Composites and the median](#18-composites-and-the-median)
+  - [1.9 Maps and coordinates](#19-maps-and-coordinates)
+  - [1.10 Where the data come from technically](#110-where-the-data-come-from-technically)
+  - [1.11 File formats used](#111-file-formats-used)
+  - [1.12 Other terms](#112-other-terms)
+- [Part 2: The statistics and economics, in plain English](#part-2-the-statistics-and-economics-in-plain-english)
+  - [2.1 Correlation vs regression](#21-correlation-vs-regression)
+  - [2.2 Reading a regression result](#22-reading-a-regression-result)
+  - [2.3 Why simple comparisons mislead: confounding](#23-why-simple-comparisons-mislead-confounding)
+  - [2.4 Panel data](#24-panel-data)
+  - [2.5 Fixed effects (FE): the key idea](#25-fixed-effects-fe-the-key-idea)
+  - [2.6 Other designs used](#26-other-designs-used)
+  - [2.7 Economics terms used in the write-ups](#27-economics-terms-used-in-the-write-ups)
+- [Part 3: How the repo is organised](#part-3-how-the-repo-is-organised)
+  - [Python libraries used](#python-libraries-used)
+- [Part 4: Every file explained](#part-4-every-file-explained)
+  - [`run_all.sh`: the conductor](#run_allsh-the-conductor)
+  - [`requirements.txt`](#requirementstxt)
+  - [`.gitignore`](#gitignore)
+  - [`src/config.py`: every setting in one place](#srcconfigpy-every-setting-in-one-place)
+  - [`src/composites.py`: Landsat summer images (Part A, step 1)](#srccompositespy-landsat-summer-images-part-a-step-1)
+  - [`src/modis.py`: night and day temperature (Part A, step 2)](#srcmodispy-night-and-day-temperature-part-a-step-2)
+  - [`src/analysis.py`: Part A statistics (step 3)](#srcanalysispy-part-a-statistics-step-3)
+  - [`src/figures.py`: Part A charts (step 4)](#srcfigurespy-part-a-charts-step-4)
+  - [`src/wards.py`: ward boundaries (Part B, step 1)](#srcwardspy-ward-boundaries-part-b-step-1)
+  - [`src/seasonal.py`: satellite data per ward season (Part B, step 2)](#srcseasonalpy-satellite-data-per-ward-season-part-b-step-2)
+  - [`src/air_quality.py`: PM2.5 per ward (Part B, step 3, optional)](#srcair_qualitypy-pm25-per-ward-part-b-step-3-optional)
+  - [`src/panel.py`: building the ward dataset (Part B, step 4)](#srcpanelpy-building-the-ward-dataset-part-b-step-4)
+  - [`src/ward_models.py`: Part B econometrics (step 5a)](#srcward_modelspy-part-b-econometrics-step-5a)
+  - [`src/economics.py`: the economics layer (step 6)](#srceconomicspy-the-economics-layer-step-6)
+  - [`src/ward_maps.py`: ward maps (step 5b)](#srcward_mapspy-ward-maps-step-5b)
+- [Part 5: The outputs and how to read them](#part-5-the-outputs-and-how-to-read-them)
+- [Part 6: Interview cheat sheet](#part-6-interview-cheat-sheet)
+- [Part 7: Git, GitHub and the website](#part-7-git-github-and-the-website)
+  - [7.1 Three copies of the project](#71-three-copies-of-the-project)
+  - [7.2 The Git commands you will use](#72-the-git-commands-you-will-use)
+  - [7.3 How the interactive map (HTML) is created](#73-how-the-interactive-map-html-is-created)
+  - [7.4 How GitHub Pages turned the repo into a website](#74-how-github-pages-turned-the-repo-into-a-website)
+
+## Term index (A–Z)
+
+Click a term to jump to where it's explained.
+
+| Term | Explained in |
+|---|---|
+| API key | [1.12 Other terms](#112-other-terms) |
+| Attributable heat | [2.7 Economics terms used in the write-ups](#27-economics-terms-used-in-the-write-ups) |
+| Bad control | [2.6 Other designs used](#26-other-designs-used) |
+| Band (satellite) | [1.2 How satellites "see"](#12-how-satellites-see) |
+| Bounding box (bbox) | [1.9 Maps and coordinates](#19-maps-and-coordinates) |
+| Branch (Git) | [7.1 Three copies of the project](#71-three-copies-of-the-project) |
+| CDN | [7.3 How the interactive map (HTML) is created](#73-how-the-interactive-map-html-is-created) |
+| Choropleth map | [7.3 How the interactive map (HTML) is created](#73-how-the-interactive-map-html-is-created) |
+| Cloud mask (QA_PIXEL, SCL) | [1.7 Clouds: the biggest practical problem](#17-clouds-the-biggest-practical-problem) |
+| Clustered standard errors | [2.6 Other designs used](#26-other-designs-used) |
+| Coefficient | [2.2 Reading a regression result](#22-reading-a-regression-result) |
+| COG (Cloud-Optimized GeoTIFF) | [1.10 Where the data come from technically](#110-where-the-data-come-from-technically) |
+| Commit / push / pull | [7.2 The Git commands you will use](#72-the-git-commands-you-will-use) |
+| Composite | [1.8 Composites and the median](#18-composites-and-the-median) |
+| Confidence interval (CI) | [0.6 How sure are we? Standard error, confidence interval and p-value](#06-how-sure-are-we-standard-error-confidence-interval-and-p-value) |
+| Confounding / confounder | [0.7 Confounding, and why we need fixed effects](#07-confounding-and-why-we-need-fixed-effects) |
+| Correlation | [0.4 Correlation: do two columns move together?](#04-correlation-do-two-columns-move-together) |
+| CRS / EPSG / UTM | [1.9 Maps and coordinates](#19-maps-and-coordinates) |
+| Discount rate | [2.7 Economics terms used in the write-ups](#27-economics-terms-used-in-the-write-ups) |
+| Distributional analysis | [2.7 Economics terms used in the write-ups](#27-economics-terms-used-in-the-write-ups) |
+| DuckDB | [1.11 File formats used](#111-file-formats-used) |
+| Environment variable | [1.12 Other terms](#112-other-terms) |
+| Externality | [2.7 Economics terms used in the write-ups](#27-economics-terms-used-in-the-write-ups) |
+| Extrapolation | [2.7 Economics terms used in the write-ups](#27-economics-terms-used-in-the-write-ups) |
+| Fixed effects (FE) | [0.7 Confounding, and why we need fixed effects](#07-confounding-and-why-we-need-fixed-effects) |
+| GDAL | [Python libraries used](#python-libraries-used) |
+| GeoJSON / KML / Parquet / NetCDF | [1.11 File formats used](#111-file-formats-used) |
+| GitHub Pages | [7.4 How GitHub Pages turned the repo into a website](#74-how-github-pages-turned-the-repo-into-a-website) |
+| Hedonic pricing | [2.7 Economics terms used in the write-ups](#27-economics-terms-used-in-the-write-ups) |
+| Heterogeneity | [2.6 Other designs used](#26-other-designs-used) |
+| IDW (interpolation) | [1.12 Other terms](#112-other-terms) |
+| Jekyll | [7.4 How GitHub Pages turned the repo into a website](#74-how-github-pages-turned-the-repo-into-a-website) |
+| Landsat / Sentinel-2 / MODIS | [1.6 The satellites and datasets](#16-the-satellites-and-datasets) |
+| Leave-one-out cross-validation (LOO-CV) | [1.12 Other terms](#112-other-terms) |
+| Long difference | [2.6 Other designs used](#26-other-designs-used) |
+| LST (Land Surface Temperature) | [1.4 LST: measuring heat](#14-lst-measuring-heat) |
+| Mean vs median | [0.2 Averages: mean vs median](#02-averages-mean-vs-median) |
+| NDVI | [1.3 NDVI: measuring greenery](#13-ndvi-measuring-greenery) |
+| OLS (ordinary least squares) | [0.5 Regression: putting a number on the relationship](#05-regression-putting-a-number-on-the-relationship) |
+| p-value | [0.6 How sure are we? Standard error, confidence interval and p-value](#06-how-sure-are-we-standard-error-confidence-interval-and-p-value) |
+| Panel data | [2.4 Panel data](#24-panel-data) |
+| Percentage points (pp) | [2.2 Reading a regression result](#22-reading-a-regression-result) |
+| Person-°C | [2.7 Economics terms used in the write-ups](#27-economics-terms-used-in-the-write-ups) |
+| Pigouvian levy | [2.7 Economics terms used in the write-ups](#27-economics-terms-used-in-the-write-ups) |
+| Pixel / resolution | [1.2 How satellites "see"](#12-how-satellites-see) |
+| Placebo / permutation test | [2.6 Other designs used](#26-other-designs-used) |
+| PM2.5 | [1.12 Other terms](#112-other-terms) |
+| Pooled OLS | [2.6 Other designs used](#26-other-designs-used) |
+| Public good | [2.7 Economics terms used in the write-ups](#27-economics-terms-used-in-the-write-ups) |
+| Quartile | [2.6 Other designs used](#26-other-designs-used) |
+| Raster vs vector | [1.2 How satellites "see"](#12-how-satellites-see) |
+| Rasterize | [1.12 Other terms](#112-other-terms) |
+| Reflectance | [1.2 How satellites "see"](#12-how-satellites-see) |
+| Regression | [0.5 Regression: putting a number on the relationship](#05-regression-putting-a-number-on-the-relationship) |
+| Reproject / resample | [1.9 Maps and coordinates](#19-maps-and-coordinates) |
+| Robustness check | [2.6 Other designs used](#26-other-designs-used) |
+| R² | [2.2 Reading a regression result](#22-reading-a-regression-result) |
+| Shadow price | [2.7 Economics terms used in the write-ups](#27-economics-terms-used-in-the-write-ups) |
+| Signed URL | [1.10 Where the data come from technically](#110-where-the-data-come-from-technically) |
+| Spatial correlation | [2.6 Other designs used](#26-other-designs-used) |
+| Spearman's ρ | [2.1 Correlation vs regression](#21-correlation-vs-regression) |
+| STAC (catalog) | [1.10 Where the data come from technically](#110-where-the-data-come-from-technically) |
+| Standard deviation | [0.3 Spread: how much values vary](#03-spread-how-much-values-vary) |
+| Standard error (SE) | [0.6 How sure are we? Standard error, confidence interval and p-value](#06-how-sure-are-we-standard-error-confidence-interval-and-p-value) |
+| Statistical significance | [0.6 How sure are we? Standard error, confidence interval and p-value](#06-how-sure-are-we-standard-error-confidence-interval-and-p-value) |
+| SUHI / Urban Heat Island | [1.5 Urban Heat Island (UHI)](#15-urban-heat-island-uhi) |
+| Two-way fixed effects (TWFE) | [2.5 Fixed effects (FE): the key idea](#25-fixed-effects-fe-the-key-idea) |
+| UTFVI (hotspots) | [src/analysis.py: Part A statistics (step 3)](#srcanalysispy-part-a-statistics-step-3) |
+| Zonal statistics | [1.12 Other terms](#112-other-terms) |
+
+<!-- INDEX:END -->
+
 ---
 
 ## Part 0: Start here, from data engineer to data scientist
