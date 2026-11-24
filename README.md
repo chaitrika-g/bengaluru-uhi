@@ -108,6 +108,9 @@ pip install -r requirements.txt
 bash run_all.sh        # ~20 minutes on first run (satellite downloads are cached)
 ```
 
+- **On a Mac,** run `caffeinate -i bash run_all.sh` so the laptop doesn't sleep mid-download.
+- **Interrupted?** Just re-run. Finished downloads are kept and skipped, failed downloads retry with fresh links, and `UHI_FORCE=1` rebuilds everything from scratch.
+
 | File | Role |
 |---|---|
 | `src/config.py` | Every analytical choice (study area, season, thresholds) in one place |

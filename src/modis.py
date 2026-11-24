@@ -37,6 +37,9 @@ def season(cat, year, bounds):
 
 
 def main():
+    if (C.DATA / "modis.nc").exists() and not C.FORCE:
+        print("modis.nc already exists - skipping (set UHI_FORCE=1 to rebuild)")
+        return
     cat = pystac_client.Client.open(C.STAC_URL, modifier=pc.sign_inplace)
     b = utm_bounds()
     b = tuple(np.floor(v / RES) * RES if i < 2 else np.ceil(v / RES) * RES for i, v in enumerate(b))

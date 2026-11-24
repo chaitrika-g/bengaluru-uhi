@@ -85,6 +85,9 @@ def worldcover(cat, bounds):
 
 def main():
     C.DATA.mkdir(exist_ok=True)
+    if (C.DATA / "composites.nc").exists() and (C.DATA / "worldcover.nc").exists() and not C.FORCE:
+        print("composites.nc and worldcover.nc already exist - skipping (set UHI_FORCE=1 to rebuild)")
+        return
     cat, bounds = catalog(), utm_bounds()
     ds = xr.concat([year_composite(cat, y, bounds) for y in C.YEARS], dim="year")
     for v in ds.variables:

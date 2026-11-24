@@ -13,6 +13,14 @@ if os.environ.get("UHI_SINGLE_THREADED") == "1":
     import dask
     dask.config.set(scheduler="synchronous")
 
+# Network resilience: GDAL retries failed/partial HTTP reads itself before raising an error
+for _k, _v in {"GDAL_HTTP_MAX_RETRY": "5", "GDAL_HTTP_RETRY_DELAY": "3",
+               "GDAL_HTTP_TIMEOUT": "120", "GDAL_DISABLE_READDIR_ON_OPEN": "EMPTY_DIR"}.items():
+    os.environ.setdefault(_k, _v)
+
+# Finished downloads are reused on re-runs. Set UHI_FORCE=1 to rebuild everything from scratch.
+FORCE = os.environ.get("UHI_FORCE") == "1"
+
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data"
 OUT = ROOT / "outputs"

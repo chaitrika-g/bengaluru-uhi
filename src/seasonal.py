@@ -35,15 +35,21 @@ def ward_bounds(res, buffer_m=1000):
     return b, bbox
 
 
-def with_retry(fn, *a, tries=3, **kw):
+def with_retry(fn, tries=5):
+    """Call fn(cat) up to `tries` times. Each attempt opens a NEW catalog connection, which
+    issues fresh signed download URLs - old ones expire if the laptop sleeps or Wi-Fi drops."""
     for i in range(tries):
         try:
-            return fn(*a, **kw)
-        except Exception as e:  # network / signed-URL expiry on long reads
+            return fn(catalog())
+        except Exception as e:  # network drop, DNS failure, expired signed URL, API reset
             if i == tries - 1:
+                log.error("Giving up after %d attempts. Check your internet connection, then re-run: "
+                          "finished files are kept and skipped.", tries)
                 raise
-            log.warning("Attempt %d failed (%s); retrying", i + 1, e)
-            time.sleep(5 * 2 ** i)
+            wait = min(15 * 2 ** i, 240)
+            log.warning("Attempt %d/%d failed (%s: %s); retrying in %ds with fresh links",
+                        i + 1, tries, type(e).__name__, str(e)[:150], wait)
+            time.sleep(wait)
 
 
 def sentinel2_ndvi(cat, year, season, bounds, bbox):
@@ -88,15 +94,14 @@ def save(ds, path):
 
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
-    cat = catalog()
     s2_bounds, bbox = ward_bounds(cfg.S2_RES)
     ls_bounds, _ = ward_bounds(cfg.RES)
     for year in cfg.YEARS:
         for season in cfg.SEASONS:
-            for sensor, fn in [("landsat", lambda: landsat_lst(cat, year, season, ls_bounds)),
-                               ("s2", lambda: sentinel2_ndvi(cat, year, season, s2_bounds, bbox))]:
+            for sensor, fn in [("landsat", lambda cat: landsat_lst(cat, year, season, ls_bounds)),
+                               ("s2", lambda cat: sentinel2_ndvi(cat, year, season, s2_bounds, bbox))]:
                 path = OUT / f"{sensor}_{year}_{season}.nc"
-                if path.exists():
+                if path.exists() and not cfg.FORCE:
                     log.info("cached: %s", path.name)
                     continue
                 t = time.time()
