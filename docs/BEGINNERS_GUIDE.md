@@ -374,7 +374,9 @@ Result: **2,250 rows** (225 wards × 5 years × 2 seasons), all passing.
   - **M3/M4:** summer only (**+1.9 °C** per 0.1 NDVI) vs winter only (+0.24 °C).
   - **M2s:** summer, green cover: **10 pp lost → +1.0 °C**.
   - **Pooled** model for comparison.
-  - **M5 and A1** (only if PM2.5 exists): a PM2.5 sensitivity check, and PM2.5 as the *outcome*.
+  - **M1-PM** (only if PM2.5 exists): M1 re-run on **only the seasons that have PM2.5 data**. It's the like-for-like baseline for M5. Comparing M5 with the full M1 would mix two changes (adding PM2.5 *and* dropping seasons).
+  - **M5:** M1-PM plus PM2.5 as a control, a sensitivity check of whether pollution explains the heat result.
+  - **A1:** PM2.5 as the *outcome*: does green loss go with more pollution?
   - **A2:** A1 re-run using the **fixed station set** only.
   - **A3:** A1 re-run on **wards within 3 km of a station**, where the interpolated values are most reliable.
 - **`placebo_a1()`**: the **permutation test** for A1. Within each season it shuffles which station had which reading, re-interpolates to wards, and re-estimates A1, 200 times. It reports the real effect, the range of shuffled ("placebo") effects, and the **permutation p-value**, and saves them to `outputs/aq_placebo_test.csv`. *Why it's needed:* when tested on completely random fake station data, the normal clustered p-value said "highly significant" (p < 0.001), but the placebo test correctly said "not real" (p = 0.33). Interpolation makes ordinary p-values over-confident, as explained under spatial correlation in Part 2.
@@ -411,6 +413,19 @@ Result: **2,250 rows** (225 wards × 5 years × 2 seasons), all passing.
 | `outputs/aq_diagnostics.csv` | PM2.5: stations, interpolation error and distance to stations, per season (only if the air-quality step ran) |
 | `outputs/aq_placebo_test.csv` | PM2.5: placebo-test result for A1 (only if the air-quality step ran) |
 | `data/uhi.duckdb` | Everything queryable with SQL |
+
+**Your PM2.5 results, read in plain English** (from `outputs/ward_model_results.csv` and `aq_placebo_test.csv`):
+
+| Row | Value | Meaning |
+|---|---|---|
+| M1-PM | +0.50 °C | On the 5 seasons with PM2.5 data, a 0.1 NDVI drop goes with a 0.50 °C hotter ward. |
+| M5 | +0.42 °C | Adding PM2.5 as a control barely changes this, so **pollution doesn't explain the heat result**. (Its drop from the full-sample 0.82 °C comes mostly from using fewer seasons, which is why M1-PM is needed.) |
+| A1 | +8.7 µg/m³ | Wards that lost vegetation also saw higher interpolated PM2.5. |
+| A2 | +6.0 µg/m³ | Still there using only the 7 stations present in every season, so it isn't an artefact of the network changing. |
+| A3 | +9.5 µg/m³ (wide CI) | Still there near stations, where the estimates are most reliable. |
+| Placebo | p = 0.025 | The real effect is larger than 97.5 % of 200 "shuffled" fakes. |
+
+**Overall:** a **secondary, suggestive** finding. It is consistent across checks, but it's an association (construction may drive both green loss and dust) based on only 7–13 stations, 5 of 10 seasons, and large interpolation error.
 
 **Example of reading a model row:** `M2s summer only: 10 pp green-cover loss -> °C | effect 1.017 | ci95 0.763–1.272 | p 0.000`
 → *"In summer, a ward that loses 10 percentage points of green cover becomes about 1 °C hotter, most likely between 0.76 and 1.27 °C, and this is very unlikely to be chance."*
