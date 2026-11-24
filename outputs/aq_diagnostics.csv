@@ -1,0 +1,8 @@
+year,season,stations,fixed_set_stations,station_mean_pm25,loo_cv_rmse,median_ward_km_to_station,wards_within_3km_pct,used_in_models
+2022,summer,8,7,39.22,9.89,3.56,40.44,True
+2022,winter,8,7,35.42,12.03,3.56,40.44,True
+2024,summer,1,0,,,,,False
+2025,summer,12,7,31.24,6.38,3.07,48.44,True
+2025,winter,1,0,,,,,False
+2026,summer,13,7,36.68,8.99,3.02,49.78,True
+2026,winter,13,7,45.38,21.85,3.02,49.78,True

@@ -5,3 +5,8 @@ M3/4 winter only: 0.1 NDVI drop -> °C,0.2386,0.1054,0.0319,0.4453,0.0237,1125,2
 M3/4 summer only: 0.1 NDVI drop -> °C,1.913,0.3345,1.2573,2.5687,0.0,1125,225
 M2s summer only: 10 pp green-cover loss -> °C,1.0174,0.1297,0.7632,1.2716,0.0,1125,225
 "Pooled OLS, no ward FE (for comparison)",0.6859,0.0276,0.6319,0.7399,0.0,2250,225
+M1-PM Baseline: M1 on PM2.5 seasons only,0.5041,0.1481,0.2139,0.7943,0.0007,1125,225
+M5 Sensitivity: + PM2.5 control,0.4167,0.153,0.1168,0.7166,0.0065,1125,225
+A1 Air quality outcome: 0.1 NDVI drop -> ug/m3 PM2.5,8.665,1.3783,5.9635,11.3665,0.0,1125,225
+A2 Robustness: fixed station set only,6.0374,1.1603,3.7632,8.3115,0.0,1125,225
+A3 Robustness: wards within 3 km of a station,9.5276,3.4874,2.6924,16.3627,0.0063,515,115
