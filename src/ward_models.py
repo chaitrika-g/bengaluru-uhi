@@ -60,6 +60,9 @@ def models(p):
 
     aq = p.dropna(subset=["est_pm25"])
     if len(aq) > 50:
+        # Like-for-like baseline: M1 on exactly the seasons that have PM2.5, so M5 is comparable
+        out.append(summarise(fe("mean_lst_c ~ mean_ndvi + C(ward_id) + C(period)", aq),
+                             "mean_ndvi", -0.1, "M1-PM Baseline: M1 on PM2.5 seasons only", aq.ward_id.nunique()))
         out.append(summarise(fe("mean_lst_c ~ mean_ndvi + est_pm25 + C(ward_id) + C(period)", aq),
                              "mean_ndvi", -0.1, "M5 Sensitivity: + PM2.5 control", aq.ward_id.nunique()))
         out.append(summarise(fe("est_pm25 ~ mean_ndvi + C(ward_id) + C(period)", aq),

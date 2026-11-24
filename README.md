@@ -59,14 +59,26 @@ The grid study above uses ~1 km cells. Part B repeats the analysis on the **225 
 3. **Green is being lost at the edge, not the centre.** Inside BBMP, ward-average green cover barely moved (21.7 % → 20.4 %). Only 16 % of wards lost more than 2 pp, and 12 % gained. Losses cluster in the eastern and south-western periphery wards. Combined with the Part A map, this suggests most greenery is disappearing on the urban fringe, much of it outside BBMP's boundary. That is a governance question as much as an environmental one.
 4. **Density is linked to heat; social group is not (in this data).** Denser wards are hotter (Spearman ρ = 0.19) and far less green (ρ = −0.58). Wards with a higher SC/ST population share are *not* hotter (ρ = 0.06, p = 0.37) and are somewhat greener (ρ = 0.30). With this proxy and these data I find no heat-inequity gap. The proxy is coarse: the population figures are Census-2011-based, and SC/ST share is not income. Income or slum data would be a stronger test.
 
-**Air quality (PM2.5):** the module ([`src/air_quality.py`](src/air_quality.py)) is built and tested but **not yet run**, because the OpenAQ API needs a free key. To enable it:
-1. Supply your OpenAQ key **at runtime only**. It is never read from or written to any file:
-   - **Option A:** run `python src/air_quality.py` in a terminal and paste the key at the hidden prompt. Press Enter to skip.
-   - **Option B:** set it for one command only, with `OPENAQ_API_KEY=<your-key> bash run_all.sh`.
-   - **Alternatively,** drop a CPCB export into `data/raw/air_quality.csv`.
-2. Re-run the pipeline.
+**Air quality (PM2.5): a secondary, suggestive finding.** Station PM2.5 from OpenAQ was interpolated to wards (inverse distance weighting). Data are thin:
+- Only **5 of 10 seasons** had at least 5 reporting stations; 2023 is missing, and two seasons had a single station.
+- Each usable season had 8–13 stations, 7 of which reported in every season.
+- Leave-one-out interpolation error was 6–22 µg/m³ (`outputs/aq_diagnostics.csv`).
 
-It interpolates station PM2.5 to ward centroids (inverse distance weighting) and reports leave-one-out error and distance to the nearest station for every estimate. Because interpolation makes ordinary p-values over-confident, the air-quality result (A1) is checked three ways: with a **fixed station set** (A2), with **wards within 3 km of a station** (A3), and with a **200-run permutation (placebo) test** (`outputs/aq_placebo_test.csv`). PM2.5 enters the models as a **separate outcome and a sensitivity check, not as a control in the heat regression**. It is not a plausible driver of surface temperature, so controlling for it would bias the green-cover estimate ("bad control"). Bengaluru also has roughly a dozen monitors for 225 wards, so the interpolated surface is very smooth.
+| PM2.5 model (ward + season fixed effects) | Effect of a 0.1 NDVI drop | 95 % CI |
+|---|---|---|
+| A1: all usable seasons | +8.7 µg/m³ | 6.0 – 11.4 |
+| **A2: fixed set of 7 stations** (rules out network-change artefacts) | **+6.0 µg/m³** | 3.8 – 8.3 |
+| A3: wards within 3 km of a station | +9.5 µg/m³ | 2.7 – 16.4 |
+| Placebo test: station readings shuffled 200 times | real effect beyond 97.5 % of shuffles | permutation p = 0.025 |
+
+**How to read it:** wards that lost vegetation also saw higher interpolated PM2.5, consistently across three checks. This is an **association, not a causal estimate**. Construction both clears vegetation and raises dust, so "development" is a likely common cause. Interpolating from about a dozen stations also leaves large uncertainty for individual wards.
+
+**Does pollution explain the heat result? No.** On the same five seasons, the heat effect of a 0.1 NDVI drop is +0.50 °C without PM2.5 and +0.42 °C with it (model M5). PM2.5 is a sensitivity check, not a control in the headline model. It doesn't plausibly drive surface temperature and is itself an outcome of urbanisation (a "bad control").
+
+**Reproducing it:** supply an OpenAQ key **at runtime only**. It is never read from or written to any file:
+- run `python src/air_quality.py` and paste the key at the hidden prompt (Enter skips); or
+- set it for one command only, with `OPENAQ_API_KEY=<your-key> bash run_all.sh`; or
+- drop a CPCB export into `data/raw/air_quality.csv` (columns `station, lat, lon, date, pm25`).
 
 ## Why the design matters (the econometrics)
 
