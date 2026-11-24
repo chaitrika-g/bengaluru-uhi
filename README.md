@@ -4,6 +4,8 @@ This project has two parts:
 - **Part A:** a city-wide study on a 1 km grid.
 - **[Part B](#part-b-ward-level-panel-225-bbmp-wards):** a panel of 225 BBMP wards.
 
+New to satellites or econometrics? Start with the [Beginner's Guide](docs/BEGINNERS_GUIDE.md).
+
 *An open, reproducible satellite study of how losing urban greenery is making Bengaluru hotter, with a view to the economics of who pays for it.*
 
 > **Motivation.** I moved to Bengaluru in 2022. Each summer since then has felt harsher than the last, and the city I arrived in was visibly greener than the one I live in now. As a data engineer I wanted to test that feeling against evidence. Is the city actually getting hotter? Is green cover actually disappearing? And can the two be linked in a way that would stand up to scrutiny?
