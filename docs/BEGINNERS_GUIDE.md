@@ -1,6 +1,122 @@
 # Beginner's Guide to This Project
 
-This guide explains **every concept and every file** in the repo, assuming no background in satellites, geography or econometrics. Read it in order: Part 1 covers the ideas, Part 2 the statistics, Parts 3–5 the code, Part 6 is an interview cheat sheet, and Part 7 covers Git, GitHub and the website.
+This guide explains **every concept and every file** in the repo, assuming no background in satellites, statistics or econometrics. It's written for someone with a **data-engineering** background.
+
+**Reading order:**
+- **Part 0, start here:** statistics from zero, with data-engineering analogies and tiny worked examples.
+- **Part 1:** satellite and map concepts.
+- **Part 2:** the statistics and economics terms used in the project.
+- **Parts 3–5:** the code, file by file, and the outputs.
+- **Part 6:** interview cheat sheet.
+- **Part 7:** Git, GitHub and the website.
+
+---
+
+## Part 0: Start here, from data engineer to data scientist
+
+You already know most of the *engineering* in this project: pipelines, files, schemas, SQL, validation. What's new is (a) **satellite data** and (b) **statistics**. This part builds both from zero, using things you already know.
+
+### 0.1 This project, translated into data-engineering terms
+
+| In this project | What it is in your world |
+|---|---|
+| `run_all.sh` running 10 scripts in order | A **DAG / ETL job**: each step reads the previous step's output |
+| STAC catalog search | Querying a **metadata catalog** (like a Hive metastore or AWS Glue) to find which files hold the data you need |
+| Cloud-Optimized GeoTIFF (COG) | A file format that supports **range reads**: fetch only the bytes you need, like reading a few row groups from a Parquet file |
+| A raster (satellite image) | A **2-D array**, or a giant table with columns `(x, y, value)`: one row per pixel |
+| A seasonal median composite | An **aggregation**: `GROUP BY pixel` over 10–40 scenes, taking `MEDIAN(value)` |
+| Cloud masking | A **data-quality filter**: `WHERE quality_flag = 'clear'` |
+| Zonal statistics (ward means) | `SELECT ward_id, AVG(lst) FROM pixels JOIN ward_lookup USING (pixel) GROUP BY ward_id` |
+| Rasterizing ward shapes | Building that **`pixel → ward_id` lookup table** |
+| The ward panel (2,250 rows) | A **fact table** with grain `(ward_id, year, season)` and measures `mean_lst_c`, `mean_ndvi`, `green_cover_pct` |
+| `wards` table | A **dimension table** (ward name, population, constituency) |
+| `validate()` checks | **Data-quality tests** (row counts, primary-key uniqueness, value ranges), like dbt tests or Great Expectations |
+| Caching finished `.nc` files and retries | **Idempotent, restartable** pipeline steps |
+| A regression model | A function that summarises a relationship in the fact table as **one number with an error bar** (explained below) |
+
+The engineering half of this project is your home ground. The rest of this part covers the other half.
+
+### 0.2 Averages: mean vs median
+- **Mean** = sum ÷ count. **Median** = the middle value when sorted.
+- Example: one pixel's temperature on five dates: `31, 32, 33, 30, 5`. The `5` is a cloud that slipped past the mask.
+  - Mean = 131 ÷ 5 = **26.2 °C**, dragged down by the cloud.
+  - Median = sorted `5, 30, 31, 32, 33` → **31 °C**, unaffected.
+- That's why the composites use the **median**: one bad value can't distort it.
+
+### 0.3 Spread: how much values vary
+- **Variance / standard deviation (SD):** how far values typically sit from the mean. A small SD means the values are tightly clustered.
+- You'll mostly see a related idea, the **standard error** (0.6 below), which is about how uncertain an *estimate* is.
+
+### 0.4 Correlation: do two columns move together?
+- A number from **−1 to +1**.
+  - **+1:** when one goes up, the other always goes up.
+  - **−1:** when one goes up, the other always goes down.
+  - **0:** no straight-line relationship.
+- In this project, NDVI and temperature have a **negative** correlation: greener places are cooler.
+- **Correlation is not causation.** Ice-cream sales and drownings are correlated because both rise in summer. Summer is a **confounder**: it causes both.
+
+### 0.5 Regression: putting a number on the relationship
+A regression fits the **best straight line** through the data and reports its **slope**.
+
+Toy example, three wards:
+
+| Ward | Green cover | Temperature |
+|---|---|---|
+| A | 10 % | 40 °C |
+| B | 30 % | 38 °C |
+| C | 50 % | 36 °C |
+
+Every +20 percentage points of green goes with −2 °C, so the slope is **−0.1 °C per percentage point**, i.e. **10 pp less green ≈ +1 °C**.
+
+- The slope is called the **coefficient**. It's the main output of a regression.
+- In real data the points don't sit on a perfect line, so the computer finds the line that fits best. That's **OLS (ordinary least squares)**: the line that makes the squared distances from the points to the line as small as possible.
+
+### 0.6 How sure are we? Standard error, confidence interval and p-value
+Real data is noisy, so the slope from a sample is an **estimate**. Collect different data and you'd get a slightly different slope.
+
+| Term | Plain meaning | Analogy |
+|---|---|---|
+| **Standard error (SE)** | How much the estimate would wobble with different data | The "±" on a measurement |
+| **95 % confidence interval (CI)** | Roughly estimate ± 2 × SE: the range of believable values | "Delivery between 2 and 4 pm" |
+| **p-value** | If there were truly **no** effect, how often would we see one this big just by chance? | Flip a fair coin 10 times and get 10 heads: that happens about 0.1 % of the time (p ≈ 0.001), so you'd doubt the coin is fair |
+| **Statistically significant** | p < 0.05 by convention: unlikely to be pure chance | |
+
+**Reading a real result:** "10 pp less green → +1.0 °C, 95 % CI 0.76–1.27, p < 0.001" means *the best estimate is +1 °C, the true value is very likely between 0.76 and 1.27, and it's very unlikely to be chance.*
+
+**A non-significant result:** the city's 5-year warming trend has p = 0.20. A 20 % chance of seeing it by luck is too high, so we **don't** claim it as a trend.
+
+### 0.7 Confounding, and why we need fixed effects
+Comparing leafy and industrial wards directly mixes up trees with everything else that differs between them (lakes, density, industry). Fixed effects fix this by comparing **each ward with itself over time**.
+
+Toy example, two wards over two years:
+
+| Ward | 2022 green | 2022 temp | 2026 green | 2026 temp | Change in green | Change in temp |
+|---|---|---|---|---|---|---|
+| A (leafy) | 50 % | 35.0 °C | 40 % | 36.0 °C | −10 pp | +1.0 °C |
+| B (industrial) | 10 % | 40.0 °C | 10 % | 40.5 °C | 0 pp | +0.5 °C |
+
+- **Naive comparison (2022 only):** A has 40 pp more green and is 5 °C cooler, so "10 pp = 1.25 °C". **Wrong**: part of that gap is just that A is a different kind of place.
+- **Ward fixed effects:** look only at each ward's **change**. That removes permanent differences.
+- **Year fixed effects:** ward B didn't lose any green but still warmed by 0.5 °C. That's the **city-wide weather effect** for that year, so subtract it from everyone.
+- **What's left:** A warmed 1.0 − 0.5 = **0.5 °C more than the city**, for losing 10 pp of green. So the fixed-effects answer is **0.5 °C per 10 pp**.
+
+That's exactly what the project's **two-way fixed-effects** models do, across 225 wards and 10 seasons at once. In SQL terms it's like subtracting each ward's own average (`AVG(...) OVER (PARTITION BY ward_id)`) and each period's city average before comparing.
+
+### 0.8 Other checks, in one line each
+| Term | One-line meaning |
+|---|---|
+| **Panel data** | The same units measured repeatedly over time: your fact table |
+| **Clustered standard errors** | The same ward appearing 10 times isn't 10 independent facts, so the "±" is widened accordingly |
+| **Robustness check** | Re-run with a different sample or method. If the answer barely changes, trust it more. |
+| **Placebo (permutation) test** | Shuffle the data so any real link is destroyed, re-run 200 times, and check that the real result beats almost all the shuffled ones. It's like testing a fraud model on randomly labelled data: it should find nothing there. |
+| **Bad control** | Adding a variable that is itself caused by what you're studying. It distorts the answer. |
+| **Interpolation (IDW)** | Filling in values between measured points, like forward-filling a sparse time series but in 2-D space |
+
+### 0.9 If you want to go further
+These free resources are well regarded and good preparation for an economics Masters:
+- **Khan Academy, Statistics and Probability:** the basics (averages, distributions, p-values, regression).
+- ***The Effect*** by Nick Huntington-Klein, free online: causal inference explained intuitively, including fixed effects.
+- ***Causal Inference: The Mixtape*** by Scott Cunningham, free online: the next step up, with panel data and difference-in-differences.
 
 ---
 
@@ -194,7 +310,8 @@ bengaluru-uhi/
 │   ├── raw/bbmp_wards_225.kml
 │   └── wards_web.geojson
 ├── outputs/                 ← results: tables, figures, maps
-└── docs/                    ← write-ups (methodology, economics, application guide, this file)
+└── docs/                    ← write-ups (methodology, economics, application guide, this file,
+                                and project_summary.pdf, built from docs/summary/project_summary.html)
 ```
 
 **Two parts of the analysis:**

@@ -4,6 +4,8 @@ This project has two parts:
 - **Part A:** a city-wide study on a 1 km grid.
 - **[Part B](#part-b-ward-level-panel-225-bbmp-wards):** a panel of 225 BBMP wards.
 
+**Two-page summary:** [docs/project_summary.pdf](docs/project_summary.pdf).
+
 New to satellites or econometrics? Start with the [Beginner's Guide](docs/BEGINNERS_GUIDE.md).
 
 *An open, reproducible satellite study of how losing urban greenery is making Bengaluru hotter, with a view to the economics of who pays for it.*

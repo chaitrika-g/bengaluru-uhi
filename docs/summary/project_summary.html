@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Concrete Summers: Project Summary</title>
+<style>
+  @page { size: A4; margin: 13mm 14mm 12mm 14mm; }
+  :root {
+    --ink: #1a1a19; --ink2: #4a4945; --muted: #7a7974; --rule: #dcdad3;
+    --accent: #b8461c; --tile: #f6f4ee; --link: #1c5cab;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; color: var(--ink); background: #fff;
+         font: 9.6pt/1.42 "Helvetica Neue", Helvetica, Arial, sans-serif; }
+  h1 { font-size: 17pt; line-height: 1.15; margin: 0 0 3px; letter-spacing: -0.2px; }
+  h2 { font-size: 10.5pt; margin: 9px 0 3px; color: var(--accent); text-transform: uppercase;
+       letter-spacing: 0.6px; }
+  p { margin: 0 0 5px; }
+  ul { margin: 0 0 5px; padding-left: 15px; }
+  li { margin: 0 0 2.5px; }
+  a { color: var(--link); text-decoration: none; }
+  .meta { color: var(--ink2); font-size: 9pt; margin-bottom: 7px; padding-bottom: 6px;
+          border-bottom: 1.5px solid var(--ink); }
+  .meta b { color: var(--ink); }
+  .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 6px 0 4px; }
+  .tile { background: var(--tile); border-radius: 4px; padding: 6px 8px; }
+  .tile .v { font-size: 15pt; font-weight: 700; line-height: 1.1; }
+  .tile .l { font-size: 8pt; color: var(--ink2); line-height: 1.25; margin-top: 2px; }
+  figure { margin: 5px 0 4px; }
+  figure img { width: 100%; display: block; }
+  figcaption { font-size: 7.6pt; color: var(--muted); margin-top: 2px; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  table { border-collapse: collapse; width: 100%; font-size: 8.6pt; margin: 2px 0 5px; }
+  th, td { text-align: left; padding: 2.5px 5px 2.5px 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th { color: var(--ink2); font-weight: 600; }
+  td.n { white-space: nowrap; font-weight: 600; }
+  .page { page-break-after: always; }
+  .small { font-size: 8.4pt; color: var(--ink2); }
+  .foot { font-size: 7.6pt; color: var(--muted); border-top: 1px solid var(--rule); padding-top: 4px; margin-top: 6px; }
+</style>
+</head>
+<body>
+
+<!-- ============================ PAGE 1 ============================ -->
+<section class="page">
+  <h1>Concrete Summers: Green Cover Loss and Urban Heat in Bengaluru, 2022–2026</h1>
+  <div class="meta">
+    Independent research project · <b>Chaitrika Guttarlapalli</b>, Senior Data Engineer<br>
+    Code &amp; data: <a href="https://github.com/chaitrika-g/bengaluru-uhi">github.com/chaitrika-g/bengaluru-uhi</a> ·
+    Interactive ward map: <a href="https://chaitrika-g.github.io/bengaluru-uhi/outputs/maps/ward_explorer.html">chaitrika-g.github.io/bengaluru-uhi</a>
+  </div>
+
+  <h2>Motivation and question</h2>
+  <p>I moved to Bengaluru in 2022, and each summer since has felt harsher, in a city once known as India's
+  “garden city”. I wanted to test that experience against evidence: <b>Is Bengaluru getting hotter, is it losing
+  green cover, and does the loss of greenery cause measurable local warming?</b></p>
+
+  <div class="tiles">
+    <div class="tile"><div class="v">+2.7 °C</div><div class="l">summer surface temperature, core city, 2022 → 2026</div></div>
+    <div class="tile"><div class="v">30% → 24%</div><div class="l">green cover in the core city over the same period</div></div>
+    <div class="tile"><div class="v">≈ +1 °C</div><div class="l">per 10 percentage points of green cover lost (summer, ward level)</div></div>
+    <div class="tile"><div class="v">+2.3 °C</div><div class="l">the city vs the countryside <i>at night</i> (the heat island)</div></div>
+  </div>
+
+  <h2>Key findings</h2>
+  <ul>
+    <li><b>Losing greenery makes neighbourhoods hotter.</b> Losing 10 percentage points of green cover raises local summer surface
+      temperature by about <b>0.7 °C</b> on a 1 km grid (624 cells; 95% CI 0.60–0.78) and by about <b>1.0 °C</b> across the 225 BBMP
+      wards (CI 0.76–1.27). The result holds when farmland is excluded and when only dense built-up areas are used.</li>
+    <li><b>Greenery's cooling value is concentrated in summer</b>, about 8× larger per unit of vegetation than in the dry winter,
+      which matters for how urban trees should be valued.</li>
+    <li><b>Bengaluru's heat island is a night-time phenomenon.</b> By day the city is <i>cooler</i> than the dry pre-monsoon
+      farmland around it, but at night it stays 2.1–2.5 °C warmer, every year. This is the heat residents without
+      air-conditioning cannot escape.</li>
+    <li><b>The hottest wards form an industrial belt.</b> Six of the ten hottest wards (2.0–2.6 °C above the city average) lie on
+      the western edge around Peenya, with only 5–18% green cover. Green cover is being lost mainly on the urban fringe.</li>
+    <li><b>Air quality (suggestive):</b> wards that lost vegetation also saw higher interpolated PM2.5 (+6 µg/m³ per 0.1 drop
+      in vegetation index, using a fixed set of 7 monitoring stations; placebo test p = 0.025). It's an association, likely
+      shared with construction activity.</li>
+  </ul>
+
+  <figure>
+    <img src="../../outputs/figures/fig4_green_vs_heat.png" alt="Scatter of change in green cover vs change in surface temperature per 1 km cell, and bar chart by quartile of green-cover change">
+    <figcaption>Each point is a ~1 km neighbourhood (624 in total).</figcaption>
+  </figure>
+</section>
+
+<!-- ============================ PAGE 2 ============================ -->
+<section>
+  <h2>Data and pipeline</h2>
+  <p>A reproducible Python pipeline built entirely on free, open data, without manual steps:</p>
+  <table>
+    <tr><th>Source</th><th>Used for</th><th>Volume</th></tr>
+    <tr><td>Landsat 8/9 (USGS)</td><td>Land surface temperature (heat), 60 m</td><td class="n">~130 scenes</td></tr>
+    <tr><td>Sentinel-2 (ESA)</td><td>Vegetation index (NDVI) and green cover, 20 m</td><td class="n">~230 scenes</td></tr>
+    <tr><td>MODIS Terra/Aqua (NASA)</td><td>Day and night temperature, 1 km</td><td class="n">123 composites</td></tr>
+    <tr><td>BBMP ward boundaries</td><td>225 wards with census population</td><td class="n">225 polygons</td></tr>
+    <tr><td>OpenAQ (CPCB stations)</td><td>PM2.5, interpolated to wards</td><td class="n">7–13 stations</td></tr>
+  </table>
+  <p class="small">Cloud masking, seasonal median composites, geometry repair, zonal statistics, and a validated 2,250-row
+  ward × year × season panel in DuckDB/Parquet (8 automated data-quality checks). Fully reproducible: re-run on a second machine
+  with identical results.</p>
+
+  <div class="two">
+    <div>
+      <h2>Why the result is credible</h2>
+      <ul>
+        <li><b>Two-way fixed effects:</b> each neighbourhood is compared with <i>itself</i> over time, which removes permanent
+          differences such as density and lakes, and year effects remove city-wide weather such as the 2024 drought.</li>
+        <li><b>Robustness:</b> results replicate across grid and ward units, two satellites and several samples.</li>
+        <li><b>Honest inference:</b> a permutation (placebo) test showed that ordinary p-values were over-confident for
+          interpolated pollution data; I report the stricter test.</li>
+        <li>The raw 5-year trend is <i>not</i> statistically significant (p = 0.20), so I don't claim it as one.</li>
+      </ul>
+    </div>
+    <div>
+      <h2>Limitations</h2>
+      <ul>
+        <li>Satellite surface temperature is not air temperature; the next step is validating against IMD weather stations.</li>
+        <li>The vegetation index measures greenness, not trees specifically.</li>
+        <li>Five years is short; estimates are associations under fixed-effects assumptions, not experiments.</li>
+        <li>Air-quality data are sparse (5 of 10 seasons usable).</li>
+        <li>Ward population data are Census-2011-based.</li>
+      </ul>
+    </div>
+  </div>
+
+  <figure style="margin:2px auto 0; width:80%">
+    <img src="../../outputs/figures/fig5_ward_maps.png" alt="Two ward maps: summer heat relative to the city average, and change in green cover by ward">
+  </figure>
+
+  <h2>Why this leads me to environmental economics</h2>
+  <p>The project measures <i>how much</i> hotter the city gets when it loses greenery, but not what that costs or who pays.
+  A tree's cooling is an <b>unpriced public good</b>: the owner who removes it captures the private gain while the neighbourhood
+  bears the heat, a textbook externality. The questions I now want to answer need environmental economics:
+  <b>What is the shadow price of urban green cover in Indian cities? How are heat costs (lost labour productivity, energy
+  demand, health) distributed across income groups? Which instruments, from compensatory planting rules to levies on canopy loss,
+  would correct the market failure?</b> As a data engineer I can build the evidence base; through this degree I want to learn to
+  turn it into sound policy analysis.</p>
+
+  <div class="foot">Skills demonstrated: Python (xarray, geopandas, statsmodels, dask), geospatial processing (STAC, COG, GDAL),
+  panel econometrics, data validation, DuckDB/SQL, Git/GitHub, interactive visualisation (Plotly), GitHub Pages.
+  Full methodology, limitations and code: github.com/chaitrika-g/bengaluru-uhi</div>
+</section>
+</body>
+</html>
