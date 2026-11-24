@@ -353,7 +353,7 @@ For each year × season (winter and summer), produces two files:
 4. **`seasonal_station_means()`** averages each station's readings per year × season, keeping only station-seasons with at least 20 days of data.
 5. **`idw()`** estimates PM2.5 at each ward's centre from all stations.
 6. **`loo_rmse()`** runs leave-one-out cross-validation, reporting how accurate the interpolation is.
-7. **Fixed station set:** stations reporting in **every** season are identified, and a second estimate, `est_pm25_fixed`, uses only those. This means changes in the network (stations appearing or disappearing) can't create fake changes in a ward's PM2.5.
+7. **Thin seasons dropped:** seasons with fewer than 5 stations are excluded (`MIN_STATIONS_PER_PERIOD`). With one station, every ward gets the same value, so there is no spatial information. **Fixed station set:** stations reporting in **every remaining** season are identified, and a second estimate, `est_pm25_fixed`, uses only those. This means changes in the network (stations appearing or disappearing) can't create fake changes in a ward's PM2.5.
 8. **Diagnostics:** for each season, it records the number of stations, how many are in the fixed set, the LOO-CV error, the median distance from a ward to its nearest station, and the % of wards within 3 km of a station. These are printed and saved to `outputs/aq_diagnostics.csv`.
 9. Output: `data/ward_pm25.parquet` with `est_pm25`, `est_pm25_fixed`, `nearest_station_km`, `n_stations` and `idw_loo_rmse`.
 

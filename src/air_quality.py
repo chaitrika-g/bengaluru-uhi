@@ -30,6 +30,7 @@ PM25_PARAMETER_ID = 2
 LOCAL_CSV = cfg.DATA / "raw" / "air_quality.csv"
 IDW_POWER = 2
 MIN_DAYS_PER_SEASON = 20  # a station-season needs >= 20 valid daily means
+MIN_STATIONS_PER_PERIOD = 5  # fewer stations cannot describe a spatial pattern (1 station = flat map)
 
 
 # ---------------------------------------------------------------- ingestion
@@ -153,7 +154,17 @@ def main():
     wards = gpd.read_parquet(cfg.DATA / "wards.parquet").to_crs(cfg.EPSG)
     cent = np.c_[wards.representative_point().x, wards.representative_point().y]
 
-    # Robustness: a FIXED station set = stations reporting in every period that has data.
+    # Drop periods with too few stations to interpolate a meaningful spatial pattern
+    counts = st.groupby(["year", "season"]).station.nunique()
+    thin = counts[counts < MIN_STATIONS_PER_PERIOD]
+    for (y, s_), n in thin.items():
+        log.warning("%d %s: only %d station(s) - excluded (minimum %d)", y, s_, n, MIN_STATIONS_PER_PERIOD)
+    st = st.set_index(["year", "season"]).drop(index=thin.index).reset_index()
+    if st.empty:
+        log.warning("No period has >= %d stations; nothing written", MIN_STATIONS_PER_PERIOD)
+        return
+
+    # Robustness: a FIXED station set = stations reporting in every usable period.
     # With a changing network, interpolated values can shift just because stations come and go.
     n_periods = st.groupby(["year", "season"]).ngroups
     per_station = st.groupby("station").size()
@@ -187,7 +198,10 @@ def main():
         return
     pd.concat(out).to_parquet(cfg.DATA / "ward_pm25.parquet", index=False)
     st.to_csv(cfg.OUT / "aq_station_seasonal_means.csv", index=False)
-    d = pd.DataFrame(diag).round(2)
+    for (y, s_), n in thin.items():
+        diag.append({"year": y, "season": s_, "stations": int(n), "fixed_set_stations": 0})
+    d = pd.DataFrame(diag).sort_values(["year", "season"]).round(2)
+    d["used_in_models"] = d.stations >= MIN_STATIONS_PER_PERIOD
     d.to_csv(cfg.OUT / "aq_diagnostics.csv", index=False)
     print("\nAir-quality diagnostics per period:\n", d.to_string(index=False))
     log.info("Wrote ward_pm25.parquet and outputs/aq_diagnostics.csv")

@@ -104,6 +104,7 @@ By day, Bengaluru's built core was 1.0–3.8 °C *cooler* than the rural ring in
 - IDW with power 2, from station seasonal means (≥ 20 valid days per station-season) to ward representative points.
 - Leave-one-out RMSE and distance to the nearest station are stored for each estimate.
 - PM2.5 is used as an outcome and a sensitivity check, never as a control in the headline model.
+- Seasons with fewer than 5 reporting stations are excluded from PM2.5 estimation (a single station gives every ward the same value). The fixed station set (A2) is defined over the remaining seasons.
 - **Inference for A1:** interpolated values are spatially correlated (all wards near a station share its shocks), so ward-clustered standard errors are over-confident. A1 is therefore judged by a 200-run permutation test (station readings shuffled within each period), alongside a fixed-station-set model (A2) and a near-station model (A3, within 3 km). On synthetic random data, clustered p was < 0.001 while the permutation p was 0.33.
 
 **Additional limitations:**
