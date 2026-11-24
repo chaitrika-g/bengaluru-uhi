@@ -1,8 +1,9 @@
-"""Step 5b - Ward maps.
+"""Step 7 - Ward maps (runs after economics.py so it can show the economics layers).
 
   outputs/maps/ward_explorer.html   interactive choropleth (Plotly SVG geo: no WebGL, no map tiles,
                                     works offline and on GitHub Pages):
-                                    layer switcher, hover details, top-10 heat-island wards outlined
+                                    layer switcher (incl. economics layers if economics.py has run),
+                                    hover details, top-10 heat-island wards outlined
   outputs/figures/fig5_ward_maps.png static version for the README
 """
 import json
@@ -22,13 +23,22 @@ GREEN = [[0, "#f3f1ea"], [0.5, "#7fc97f"], [1, "#006400"]]
 DIV_WARM_BAD = [[0, BLUE], [0.5, MID], [1, RED]]   # positive = hotter = red
 DIV_LOSS_BAD = [[0, RED], [0.5, MID], [1, BLUE]]   # negative = green loss = red
 
-LAYERS = [  # column, title, colorscale, symmetric-around-zero, unit
-    ("mean_lst_c_late", "Summer surface temperature, 2025–26 (°C)", HEAT, False, "°C"),
-    ("lst_rel_late", "Hotter (+) or cooler (−) than city average, summer 2025–26", DIV_WARM_BAD, True, "°C"),
-    ("green_cover_pct_late", "Green cover, summer 2025–26 (%)", GREEN, False, "%"),
-    ("d_green_cover_pct", "Change in green cover, 2022–23 → 2025–26 (pp)", DIV_LOSS_BAD, True, "pp"),
-    ("d_lst_rel", "Relative warming, 2022–23 → 2025–26 (°C)", DIV_WARM_BAD, True, "°C"),
-    ("night_lst_c_late", "Night surface temperature, summer 2025–26 (°C, MODIS 1 km)", HEAT, False, "°C"),
+LAYERS = [  # column, dropdown label, title, colorscale, symmetric-around-zero, unit
+    ("mean_lst_c_late", "Summer temperature", "Summer surface temperature, 2025–26 (°C)", HEAT, False, "°C"),
+    ("lst_rel_late", "Heat vs city average", "Hotter (+) or cooler (−) than city average, summer 2025–26", DIV_WARM_BAD, True, "°C"),
+    ("green_cover_pct_late", "Green cover", "Green cover, summer 2025–26 (%)", GREEN, False, "%"),
+    ("d_green_cover_pct", "Green cover change", "Change in green cover, 2022–23 → 2025–26 (pp)", DIV_LOSS_BAD, True, "pp"),
+    ("d_lst_rel", "Relative warming", "Relative warming, 2022–23 → 2025–26 (°C)", DIV_WARM_BAD, True, "°C"),
+    ("night_lst_c_late", "Night temperature", "Night surface temperature, summer 2025–26 (°C, MODIS 1 km)", HEAT, False, "°C"),
+]
+ECON_LAYERS = [  # shown only if src/economics.py has produced its outputs
+    ("attrib_heat_c", "Economics: warming from green change",
+     "Economics: warming (+) or cooling (−) attributable to green-cover change since 2022–23 (°C)", DIV_WARM_BAD, True, "°C"),
+    ("person_degc", "Economics: heat burden (person-°C)",
+     "Economics: heat burden = attributable warming × ward population (person-°C)", DIV_WARM_BAD, True, "person-°C"),
+    ("green_needed_pp", "Economics: green needed to cool",
+     "Economics: extra green cover needed to cool the ward to the city average (pp; 0 = already at or below average)",
+     GREEN, False, "pp"),
 ]
 
 
@@ -36,21 +46,35 @@ def load():
     wards = gpd.read_file(cfg.DATA / "wards_web.geojson")[["ward_id", "geometry"]]
     ch = pd.read_csv(cfg.OUT / "ward_change_2022_2026.csv")
     top = pd.read_csv(cfg.OUT / "top10_heat_wards.csv")
-    return wards.merge(ch, on="ward_id"), top
+    g = wards.merge(ch, on="ward_id")
+    burden, rest = cfg.OUT / "economics_ward_burden.csv", cfg.OUT / "economics_restoration.csv"
+    if burden.exists() and rest.exists():
+        g = g.merge(pd.read_csv(burden)[["ward_id", "attrib_heat_c", "person_degc"]], on="ward_id", how="left")
+        g = g.merge(pd.read_csv(rest)[["ward_id", "green_needed_pp"]], on="ward_id", how="left")
+        g["green_needed_pp"] = g.green_needed_pp.fillna(0)  # not hotter than average: nothing needed
+    return g, top
 
 
 def interactive(g, top):
     gj = json.loads(g[["ward_id", "geometry"]].to_json())
     for f in gj["features"]:
         f["id"] = f["properties"]["ward_id"]
+    econ = "attrib_heat_c" in g
+    layers = LAYERS + (ECON_LAYERS if econ else [])
     hover = ("<b>%{customdata[0]}</b> (ward %{location})<br>%{customdata[1]}<br>"
              "Summer LST 2025–26: %{customdata[2]:.1f} °C (%{customdata[3]:+.1f} vs city)<br>"
              "Green cover: %{customdata[4]:.0f}% (%{customdata[5]:+.1f} pp since 2022–23)<br>"
-             "SC/ST share: %{customdata[6]:.0f}%<extra></extra>")
-    cd = g[["ward_name", "assembly_constituency", "mean_lst_c_late", "lst_rel_late",
-            "green_cover_pct_late", "d_green_cover_pct", "sc_st_share_pct"]].values
+             "SC/ST share: %{customdata[6]:.0f}%")
+    cols = ["ward_name", "assembly_constituency", "mean_lst_c_late", "lst_rel_late",
+            "green_cover_pct_late", "d_green_cover_pct", "sc_st_share_pct"]
+    if econ:
+        hover += ("<br><i>Economics:</i> warming from green change %{customdata[7]:+.2f} °C · "
+                  "extra green needed %{customdata[8]:.0f} pp")
+        cols += ["attrib_heat_c", "green_needed_pp"]
+    hover += "<extra></extra>"
+    cd = g[cols].values
     fig = go.Figure()
-    for i, (col, title, cs, sym, unit) in enumerate(LAYERS):
+    for i, (col, _label, title, cs, sym, unit) in enumerate(layers):
         v = g[col]
         lim = float(np.nanpercentile(v.abs(), 98)) if sym else None
         fig.add_trace(go.Choropleth(
@@ -71,12 +95,12 @@ def interactive(g, top):
                                 textfont=dict(size=9, color=INK), hoverinfo="skip", name="rank"))
     key = "<b>10 hottest wards</b> (vs city avg, summer 2025–26)<br>" + "<br>".join(
         f"{i}. {r.ward_name}  +{r.lst_rel_late:.1f} °C" for i, r in enumerate(top.itertuples(), 1))
-    n = len(LAYERS)
-    buttons = [dict(label=t.split(",")[0].split("(")[0].strip()[:38], method="update",
+    n = len(layers)
+    buttons = [dict(label=label, method="update",
                     args=[{"visible": [j == i for j in range(n)] + [True, True]}, {"title.text": t}])
-               for i, (_, t, *_r) in enumerate(LAYERS)]
+               for i, (_, label, t, *_r) in enumerate(layers)]
     fig.update_layout(
-        title=dict(text=LAYERS[0][1], x=0.01, font=dict(size=16)),
+        title=dict(text=LAYERS[0][2], x=0.01, font=dict(size=16)),
         geo=dict(fitbounds="locations", visible=False, projection_type="mercator", bgcolor=SURF),
         height=760,
         updatemenus=[dict(buttons=buttons, direction="down", x=0.01, y=0.99, xanchor="left", yanchor="top",

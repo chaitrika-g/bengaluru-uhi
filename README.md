@@ -154,7 +154,8 @@ bash run_all.sh        # ~20 minutes on first run (satellite downloads are cache
 | `src/air_quality.py` | Step 3: PM2.5 from OpenAQ or CPCB → IDW per ward, with leave-one-out CV (optional) |
 | `src/panel.py` | Step 4: zonal statistics → ward panel in DuckDB + Parquet, 8 validation checks |
 | `src/ward_models.py` | Step 5a: fixed-effects models, top-10 wards, equity analysis |
-| `src/ward_maps.py` | Step 5b: interactive and static ward maps |
+| `src/economics.py` | Step 6: economics layer (who bears the heat, green needed to cool the hottest wards) |
+| `src/ward_maps.py` | Step 7: interactive and static ward maps, including three economics layers |
 
 Query the panel directly with DuckDB:
 ```sql

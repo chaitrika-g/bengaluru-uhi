@@ -22,5 +22,5 @@ python seasonal.py     # Step 2: Landsat LST + Sentinel-2 NDVI per year x season
 python air_quality.py  # Step 3: PM2.5 IDW per ward (asks for OpenAQ key at runtime; Enter skips)
 python panel.py        # Step 4: zonal stats -> validated panel in DuckDB + Parquet
 python ward_models.py  # Step 5a: fixed-effects models, top-10 wards, equity
-python ward_maps.py    # Step 5b: interactive + static ward maps
 python economics.py    # Step 6: who bears the heat, and the green cover needed to undo it
+python ward_maps.py    # Step 7: interactive + static ward maps (incl. economics layers)

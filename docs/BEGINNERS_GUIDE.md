@@ -13,6 +13,7 @@ This guide explains **every concept and every file** in the repo, assuming no ba
 **Lost?** Use the **Contents** below to jump to any section, or the **Term index (A–Z)** to find where a word like *NDVI*, *p-value* or *fixed effects* is explained.
 
 
+
 <!-- INDEX:START -->
 ## Contents
 
@@ -64,7 +65,7 @@ This guide explains **every concept and every file** in the repo, assuming no ba
   - [`src/panel.py`: building the ward dataset (Part B, step 4)](#srcpanelpy-building-the-ward-dataset-part-b-step-4)
   - [`src/ward_models.py`: Part B econometrics (step 5a)](#srcward_modelspy-part-b-econometrics-step-5a)
   - [`src/economics.py`: the economics layer (step 6)](#srceconomicspy-the-economics-layer-step-6)
-  - [`src/ward_maps.py`: ward maps (step 5b)](#srcward_mapspy-ward-maps-step-5b)
+  - [`src/ward_maps.py`: ward maps (step 7)](#srcward_mapspy-ward-maps-step-7)
 - [Part 5: The outputs and how to read them](#part-5-the-outputs-and-how-to-read-them)
 - [Part 6: Interview cheat sheet](#part-6-interview-cheat-sheet)
 - [Part 7: Git, GitHub and the website](#part-7-git-github-and-the-website)
@@ -461,8 +462,9 @@ bengaluru-uhi/
 
 **Two parts of the analysis:**
 - **Part A (city grid):** `composites.py` → `modis.py` → `analysis.py` → `figures.py`
-- **Part B (wards):** `wards.py` → `seasonal.py` → `air_quality.py` → `panel.py` → `ward_models.py` → `ward_maps.py`
+- **Part B (wards):** `wards.py` → `seasonal.py` → `air_quality.py` → `panel.py` → `ward_models.py`
 - **Part C (economics):** `economics.py`, which uses Part B's results
+- **Maps (last):** `ward_maps.py` draws the ward maps, including the economics layers, so it runs after `economics.py`
 
 ### Python libraries used
 | Library | Job |
@@ -657,10 +659,15 @@ Turns the ward results into economic quantities, using **only this project's own
 
 **Why no rupee figure?** Published damage estimates (for example, about 2 % lower factory output per +1 °C of *air* temperature in India) use air temperature, while this project measures *surface* temperature, and there's no established conversion between them for Bengaluru. Multiplying them anyway would mean inventing a number, so it's left as a clearly stated next step.
 
-### `src/ward_maps.py`: ward maps (step 5b)
+### `src/ward_maps.py`: ward maps (step 7)
 - **`interactive()`** builds `outputs/maps/ward_explorer.html` with Plotly:
-  - a **dropdown** with 6 layers: summer LST, heat vs city average, green %, green change, relative warming, night LST;
-  - **hover** shows each ward's name, constituency, values and SC/ST share;
+  - a **dropdown** with 9 layers:
+    - six heat and greenery layers: summer LST, heat vs city average, green %, green change, relative warming, night LST;
+    - three **economics layers**, which appear only if `economics.py` has run:
+      - **warming from green change** (°C attributable to each ward's green loss or gain);
+      - **heat burden** (that warming × population, in person-°C);
+      - **green needed to cool** (extra pp of green cover to bring a ward down to the city average; 0 = already at or below it);
+  - **hover** shows each ward's name, constituency, values and SC/ST share, plus its economics numbers;
   - the **top 10** hottest wards are outlined and numbered, with a key.
   - It uses SVG drawing, so no WebGL or internet map tiles are needed.
 - **`static()`** draws the two-panel PNG for the README.
