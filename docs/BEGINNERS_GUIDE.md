@@ -1,6 +1,6 @@
 # Beginner's Guide to This Project
 
-This guide explains **every concept and every file** in the repo, assuming no background in satellites, geography or econometrics. Read it in order: Part 1 covers the ideas, Part 2 the statistics, and Parts 3–5 the code.
+This guide explains **every concept and every file** in the repo, assuming no background in satellites, geography or econometrics. Read it in order: Part 1 covers the ideas, Part 2 the statistics, Parts 3–5 the code, Part 6 is an interview cheat sheet, and Part 7 covers Git, GitHub and the website.
 
 ---
 
@@ -416,3 +416,53 @@ Result: **2,250 rows** (225 wards × 5 years × 2 seasons), all passing.
 5. **"Why isn't PM2.5 in your heat regression?"** It doesn't drive surface temperature and is itself an outcome of urbanisation, so it would be a bad control. It's analysed separately.
 6. **"What are the limits?"** Surface vs air temperature, NDVI vs actual trees, only 5 years, MODIS's 1 km pixels vs small wards, Census-2011 population data, and correlation rather than a controlled experiment.
 7. **"What would you do next?"** Validate against IMD air temperatures, use tree-canopy data, link to income data, and convert °C into economic costs.
+
+---
+
+## Part 7: Git, GitHub and the website
+
+### 7.1 Three copies of the project
+```
+  Cloud session (Claude)        GitHub (online)              Your MacBook
+  ──────────────────────        ───────────────              ────────────
+  ran the pipeline     ──push──▶  repo "main"   ──clone/pull──▶  your copy
+                                  + website (Pages)            ran the pipeline again
+```
+- **Git** is version control. It saves snapshots of the project so you can see and undo every change.
+- **GitHub** is a website that hosts Git repositories online.
+- **Repository (repo):** the project folder plus its full history.
+- **Branch:** a line of development. Ours is `main`.
+
+### 7.2 The Git commands you will use
+| Command | What it does |
+|---|---|
+| `git clone <url>` | Download a repo from GitHub for the first time |
+| `git pull` | Download new changes from GitHub into your copy |
+| `git status` | Show what changed on your laptop since the last commit: **modified** files and **untracked** (new) files |
+| `git add <files>` | Choose which changes go into the next snapshot |
+| `git commit -m "message"` | Save a snapshot locally, with a description |
+| `git push` | Upload your commits to GitHub |
+
+**Key point:** running the code on your laptop changes files **only on your laptop**. Nothing reaches GitHub until you `add`, `commit` and `push`. The map currently on the website was generated in the cloud session and pushed from there. Your laptop run made an identical heat map, plus PM2.5 results that are not uploaded yet.
+
+**What never goes to GitHub:** files listed in `.gitignore` (large downloads, the database, `.env`) and anything secret, such as your API key. Git keeps history forever, so a secret pushed once stays in the history even if you delete it later.
+
+### 7.3 How the interactive map (HTML) is created
+In `src/ward_maps.py`, `interactive()`:
+1. **Loads** ward shapes (`data/wards_web.geojson`) and ward results (`outputs/ward_change_2022_2026.csv`, `top10_heat_wards.csv`).
+2. **Builds a Plotly figure:**
+   - six **choropleth** layers (a choropleth is a map where each area is coloured by a value);
+   - **hover text** for each ward;
+   - outlines and numbered markers for the top 10 wards;
+   - a **dropdown** that shows one layer at a time.
+3. **Writes it** with `fig.write_html(..., include_plotlyjs="cdn")`. Plotly puts all the shapes, numbers and settings **inside the HTML file**, plus one line that loads Plotly's drawing code from a **CDN** (content-delivery network, a public server for common code libraries).
+
+When anyone opens the file, their **browser** reads the embedded data and draws the map itself. No Python or server is needed. That makes it a **static** web page, which is why it works both by double-clicking it on your laptop and when hosted on GitHub Pages.
+
+### 7.4 How GitHub Pages turned the repo into a website
+- **GitHub Pages** is free static web hosting built into GitHub. Turning it on (repo **Settings → Pages → Deploy from a branch → `main` / root**) tells GitHub to serve the repo's files as a public website.
+- GitHub then runs an automatic job, visible in the **Actions** tab as "pages build and deployment". It copies the files on `main`, runs **Jekyll** (a simple site builder that turns Markdown such as `README.md` into web pages), and publishes the result.
+- **Web address = username + repo + folder path:** `https://chaitrika-g.github.io/bengaluru-uhi/` + `outputs/maps/ward_explorer.html`.
+- **Every push to `main` automatically re-publishes the site** within a minute or two.
+
+**One-line version for interviews:** *"The analysis is published as a static GitHub Pages site; the interactive ward map is a self-contained Plotly HTML page generated by the pipeline and redeployed automatically on every push."*
