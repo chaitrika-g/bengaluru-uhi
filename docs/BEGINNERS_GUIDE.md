@@ -114,6 +114,7 @@ For each season we have 10–40 scenes. A **composite** combines them into one c
 | **Rasterize** | Paint shapes onto a pixel grid, so each pixel knows which ward it belongs to. |
 | **PM2.5** | Fine airborne particles smaller than 2.5 micrometres; a key air-pollution measure (µg/m³). |
 | **IDW (Inverse Distance Weighting)** | Estimating a value at an unmeasured place as a weighted average of nearby stations, where closer stations count more (weight = 1 / distance²). |
+| **Monitoring station network** | The set of air-quality stations. Stations open, close or have data gaps, so the network changes from season to season. |
 | **Leave-one-out cross-validation (LOO-CV)** | A test of how good IDW is: hide one station, predict it from the others, measure the error, and repeat for each station. **RMSE** (root mean squared error) summarises those errors. |
 | **API key** | A personal password for a web service, such as OpenAQ. |
 | **Environment variable** | A named setting held by the terminal session (for example `OPENAQ_API_KEY`) that programs can read without it being written in code. |
@@ -161,6 +162,8 @@ In the code, `C(cell)` and `C(year)` in a formula create these fixed effects: `C
 | **Long difference** | Compare each place's *change* between two periods: 2022–23 average vs 2025–26 average. Averaging two years at each end reduces random year-to-year noise. |
 | **Robustness check** | Re-run the model on a different sample or specification. If the answer stays similar, it's more believable. |
 | **Bad control** | A variable that *shouldn't* be in a regression because it's itself an outcome of what you're studying, or not a real cause. Including it distorts the main estimate. That's why PM2.5 isn't used as a control in the heat model. |
+| **Spatial correlation** | Nearby places share the same shocks. With interpolated PM2.5, all wards around one station move together whenever that station's reading moves. Ordinary standard errors treat those wards as independent and become **too small**, so p-values look more significant than they are. |
+| **Placebo / permutation test** | A "fake treatment" check. Shuffle the data so any real relationship is destroyed (here, which station had which reading), re-estimate many times (200), and see how big the effects are by pure chance. **Permutation p-value** = the share of shuffled runs with an effect at least as large as the real one. If the real effect is bigger than almost all shuffled ones (p < 0.05), it's unlikely to be an artefact. |
 | **Heterogeneity** | The effect differs across groups. Here it differs across seasons: greenery cools far more in summer. |
 | **Quartile** | Split the data into four equal-sized groups by some value (lowest 25 %, …, highest 25 %). |
 | **Statistically significant trend** | Our +2.7 °C over 2022–2026 has p = 0.20 as a simple trend: with only 5 years and big weather swings, we can't call it a trend yet. That's why the conclusions rest on the FE models instead. |
@@ -350,7 +353,9 @@ For each year × season (winter and summer), produces two files:
 4. **`seasonal_station_means()`** averages each station's readings per year × season, keeping only station-seasons with at least 20 days of data.
 5. **`idw()`** estimates PM2.5 at each ward's centre from all stations.
 6. **`loo_rmse()`** runs leave-one-out cross-validation, reporting how accurate the interpolation is.
-7. Output: `data/ward_pm25.parquet` with `est_pm25`, `nearest_station_km`, `n_stations` and `idw_loo_rmse`.
+7. **Fixed station set:** stations reporting in **every** season are identified, and a second estimate, `est_pm25_fixed`, uses only those. This means changes in the network (stations appearing or disappearing) can't create fake changes in a ward's PM2.5.
+8. **Diagnostics:** for each season, it records the number of stations, how many are in the fixed set, the LOO-CV error, the median distance from a ward to its nearest station, and the % of wards within 3 km of a station. These are printed and saved to `outputs/aq_diagnostics.csv`.
+9. Output: `data/ward_pm25.parquet` with `est_pm25`, `est_pm25_fixed`, `nearest_station_km`, `n_stations` and `idw_loo_rmse`.
 
 ### `src/panel.py`: building the ward dataset (Part B, step 4)
 1. **`ward_raster()`** "paints" ward ids onto the satellite pixel grid (**rasterize**), so each pixel knows its ward.
@@ -370,6 +375,9 @@ Result: **2,250 rows** (225 wards × 5 years × 2 seasons), all passing.
   - **M2s:** summer, green cover: **10 pp lost → +1.0 °C**.
   - **Pooled** model for comparison.
   - **M5 and A1** (only if PM2.5 exists): a PM2.5 sensitivity check, and PM2.5 as the *outcome*.
+  - **A2:** A1 re-run using the **fixed station set** only.
+  - **A3:** A1 re-run on **wards within 3 km of a station**, where the interpolated values are most reliable.
+- **`placebo_a1()`**: the **permutation test** for A1. Within each season it shuffles which station had which reading, re-interpolates to wards, and re-estimates A1, 200 times. It reports the real effect, the range of shuffled ("placebo") effects, and the **permutation p-value**, and saves them to `outputs/aq_placebo_test.csv`. *Why it's needed:* when tested on completely random fake station data, the normal clustered p-value said "highly significant" (p < 0.001), but the placebo test correctly said "not real" (p = 0.33). Interpolation makes ordinary p-values over-confident, as explained under spatial correlation in Part 2.
 - **`ward_change()`** computes each ward's summer change 2022–23 → 2025–26, joined with ward attributes.
 - **`equity()`** computes Spearman correlations of heat and green cover with SC/ST share and density, plus a quartile table.
 - **`main()`** writes `ward_model_results.csv`, `ward_change_2022_2026.csv`, `top10_heat_wards.csv`, `equity_by_scst_quartile.csv` and `ward_results.json`.
@@ -400,6 +408,8 @@ Result: **2,250 rows** (225 wards × 5 years × 2 seasons), all passing.
 | `outputs/ward_model_results.csv` | Part B: every model's effect, SE, CI and p-value |
 | `outputs/top10_heat_wards.csv` | The 10 hottest wards |
 | `outputs/equity_by_scst_quartile.csv` | Heat and green cover by SC/ST-share quartile |
+| `outputs/aq_diagnostics.csv` | PM2.5: stations, interpolation error and distance to stations, per season (only if the air-quality step ran) |
+| `outputs/aq_placebo_test.csv` | PM2.5: placebo-test result for A1 (only if the air-quality step ran) |
 | `data/uhi.duckdb` | Everything queryable with SQL |
 
 **Example of reading a model row:** `M2s summer only: 10 pp green-cover loss -> °C | effect 1.017 | ci95 0.763–1.272 | p 0.000`
@@ -414,8 +424,9 @@ Result: **2,250 rows** (225 wards × 5 years × 2 seasons), all passing.
 3. **"Why fixed effects?"** To compare each place with itself over time (removing permanent differences) and remove city-wide weather shocks (year effects).
 4. **"Why is the daytime heat island negative?"** In Bengaluru's pre-monsoon summer the surrounding farmland is dry and bare, and heats up faster than the city with its trees and lakes. The heat island appears at night.
 5. **"Why isn't PM2.5 in your heat regression?"** It doesn't drive surface temperature and is itself an outcome of urbanisation, so it would be a bad control. It's analysed separately.
-6. **"What are the limits?"** Surface vs air temperature, NDVI vs actual trees, only 5 years, MODIS's 1 km pixels vs small wards, Census-2011 population data, and correlation rather than a controlled experiment.
-7. **"What would you do next?"** Validate against IMD air temperatures, use tree-canopy data, link to income data, and convert °C into economic costs.
+6. **"How do you know the PM2.5 result isn't an artefact of interpolation?"** I ran a permutation (placebo) test: shuffle station readings 200 times and compare the real effect with the shuffled ones. I also checked it with a fixed station set and with wards near a station. On fake random data, ordinary p-values were wrongly "significant" but the placebo test wasn't, which is why I rely on it.
+7. **"What are the limits?"** Surface vs air temperature, NDVI vs actual trees, only 5 years, MODIS's 1 km pixels vs small wards, Census-2011 population data, and correlation rather than a controlled experiment.
+8. **"What would you do next?"** Validate against IMD air temperatures, use tree-canopy data, link to income data, and convert °C into economic costs.
 
 ---
 

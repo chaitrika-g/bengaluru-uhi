@@ -66,7 +66,7 @@ The grid study above uses ~1 km cells. Part B repeats the analysis on the **225 
    - **Alternatively,** drop a CPCB export into `data/raw/air_quality.csv`.
 2. Re-run the pipeline.
 
-It interpolates station PM2.5 to ward centroids (inverse distance weighting) and reports leave-one-out error and distance to the nearest station for every estimate. PM2.5 enters the models as a **separate outcome and a sensitivity check, not as a control in the heat regression**. It is not a plausible driver of surface temperature, so controlling for it would bias the green-cover estimate ("bad control"). Bengaluru also has roughly a dozen monitors for 225 wards, so the interpolated surface is very smooth.
+It interpolates station PM2.5 to ward centroids (inverse distance weighting) and reports leave-one-out error and distance to the nearest station for every estimate. Because interpolation makes ordinary p-values over-confident, the air-quality result (A1) is checked three ways: with a **fixed station set** (A2), with **wards within 3 km of a station** (A3), and with a **200-run permutation (placebo) test** (`outputs/aq_placebo_test.csv`). PM2.5 enters the models as a **separate outcome and a sensitivity check, not as a control in the heat regression**. It is not a plausible driver of surface temperature, so controlling for it would bias the green-cover estimate ("bad control"). Bengaluru also has roughly a dozen monitors for 225 wards, so the interpolated surface is very smooth.
 
 ## Why the design matters (the econometrics)
 
