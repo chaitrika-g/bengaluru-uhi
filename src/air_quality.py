@@ -152,22 +152,45 @@ def main():
     st = seasonal_station_means(df)
     wards = gpd.read_parquet(cfg.DATA / "wards.parquet").to_crs(cfg.EPSG)
     cent = np.c_[wards.representative_point().x, wards.representative_point().y]
-    out = []
+
+    # Robustness: a FIXED station set = stations reporting in every period that has data.
+    # With a changing network, interpolated values can shift just because stations come and go.
+    n_periods = st.groupby(["year", "season"]).ngroups
+    per_station = st.groupby("station").size()
+    fixed = set(per_station[per_station == n_periods].index)
+    log.info("Stations: %d total, %d report in all %d periods (fixed set)", len(per_station), len(fixed), n_periods)
+    if len(fixed) < 3:
+        log.warning("Fewer than 3 stations in every period - fixed-set estimates will be empty")
+
+    out, diag = [], []
     for (year, season), g in st.groupby(["year", "season"]):
-        pts = gpd.GeoSeries(gpd.points_from_xy(g.lon, g.lat), crs=4326).to_crs(cfg.EPSG)
-        xy = np.c_[pts.x, pts.y]
-        est, dmin = idw(xy, g.pm25.values, cent)
-        rmse = loo_rmse(xy, g.pm25.values)
+        def interp(sub):
+            pts = gpd.GeoSeries(gpd.points_from_xy(sub.lon, sub.lat), crs=4326).to_crs(cfg.EPSG)
+            xy = np.c_[pts.x, pts.y]
+            est, dmin = idw(xy, sub.pm25.values, cent)
+            return est, dmin, loo_rmse(xy, sub.pm25.values)
+
+        est, dmin, rmse = interp(g)
+        gf = g[g.station.isin(fixed)]
+        est_f = interp(gf)[0] if len(gf) >= 3 else np.full(len(cent), np.nan)
         log.info("%d %s: %d stations, LOO-CV RMSE %.1f ug/m3", year, season, len(g), rmse)
         out.append(pd.DataFrame({"ward_id": wards.ward_id, "year": year, "season": season,
-                                 "est_pm25": est, "nearest_station_km": dmin / 1000,
+                                 "est_pm25": est, "est_pm25_fixed": est_f,
+                                 "nearest_station_km": dmin / 1000,
                                  "n_stations": len(g), "idw_loo_rmse": rmse}))
+        diag.append({"year": year, "season": season, "stations": len(g), "fixed_set_stations": len(gf),
+                     "station_mean_pm25": g.pm25.mean(), "loo_cv_rmse": rmse,
+                     "median_ward_km_to_station": float(np.median(dmin) / 1000),
+                     "wards_within_3km_pct": float(100 * np.mean(dmin < 3000))})
     if not out:
         log.warning("No station-season met the coverage threshold; nothing written")
         return
     pd.concat(out).to_parquet(cfg.DATA / "ward_pm25.parquet", index=False)
     st.to_csv(cfg.OUT / "aq_station_seasonal_means.csv", index=False)
-    log.info("Wrote ward_pm25.parquet")
+    d = pd.DataFrame(diag).round(2)
+    d.to_csv(cfg.OUT / "aq_diagnostics.csv", index=False)
+    print("\nAir-quality diagnostics per period:\n", d.to_string(index=False))
+    log.info("Wrote ward_pm25.parquet and outputs/aq_diagnostics.csv")
 
 
 if __name__ == "__main__":

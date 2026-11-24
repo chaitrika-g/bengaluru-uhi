@@ -65,9 +65,60 @@ def models(p):
         out.append(summarise(fe("est_pm25 ~ mean_ndvi + C(ward_id) + C(period)", aq),
                              "mean_ndvi", -0.1, "A1 Air quality outcome: 0.1 NDVI drop -> ug/m3 PM2.5",
                              aq.ward_id.nunique()))
+        # Robustness of A1
+        if "est_pm25_fixed" in p and p.est_pm25_fixed.notna().sum() > 50:
+            af = p.dropna(subset=["est_pm25_fixed"])
+            out.append(summarise(fe("est_pm25_fixed ~ mean_ndvi + C(ward_id) + C(period)", af),
+                                 "mean_ndvi", -0.1, "A2 Robustness: fixed station set only", af.ward_id.nunique()))
+        near = aq[aq.nearest_station_km < 3]
+        if near.ward_id.nunique() >= 20:
+            out.append(summarise(fe("est_pm25 ~ mean_ndvi + C(ward_id) + C(period)", near),
+                                 "mean_ndvi", -0.1, "A3 Robustness: wards within 3 km of a station",
+                                 near.ward_id.nunique()))
+        else:
+            log.info("Fewer than 20 wards within 3 km of a station - skipping A3")
     else:
-        log.info("PM2.5 not available - skipping M5 and A1")
+        log.info("PM2.5 not available - skipping M5 and A1-A3")
     return pd.DataFrame(out)
+
+
+def placebo_a1(p, n_perm=200, seed=42):
+    """Permutation (placebo) test for A1. Within each period, shuffle which station had which
+    reading, re-interpolate to wards, re-run A1. Shuffling destroys any real station-greenery link,
+    so the shuffled coefficients show what interpolation artefacts alone can produce.
+    Returns the real coefficient's permutation p-value and the placebo distribution."""
+    from air_quality import idw
+    st_path = cfg.OUT / "aq_station_seasonal_means.csv"
+    if not st_path.exists():
+        return None
+    st = pd.read_csv(st_path)
+    wards = gpd.read_parquet(cfg.DATA / "wards.parquet").to_crs(cfg.EPSG)
+    cent = np.c_[wards.representative_point().x, wards.representative_point().y]
+    base = p.dropna(subset=["est_pm25"])[["ward_id", "year", "season", "period", "mean_ndvi"]]
+    groups = []
+    for (year, season), g in st.groupby(["year", "season"]):
+        pts = gpd.GeoSeries(gpd.points_from_xy(g.lon, g.lat), crs=4326).to_crs(cfg.EPSG)
+        groups.append((year, season, np.c_[pts.x, pts.y], g.pm25.values))
+
+    def coef(df):
+        m = smf.ols("pm ~ mean_ndvi + C(ward_id) + C(period)", data=df).fit()
+        return -0.1 * m.params["mean_ndvi"]
+
+    def surface(values_by_group):
+        rows = [pd.DataFrame({"ward_id": wards.ward_id.values, "year": y, "season": s,
+                              "pm": idw(xy, v, cent)[0]}) for (y, s, xy, _), v in zip(groups, values_by_group)]
+        return base.merge(pd.concat(rows), on=["ward_id", "year", "season"])
+
+    actual = coef(surface([v for *_, v in groups]))
+    rng = np.random.default_rng(seed)
+    placebo = np.array([coef(surface([rng.permutation(v) for *_, v in groups])) for _ in range(n_perm)])
+    p_perm = (1 + np.sum(np.abs(placebo) >= abs(actual))) / (n_perm + 1)
+    log.info("A1 placebo test: actual %.2f, placebo 95%% range [%.2f, %.2f], permutation p = %.3f",
+             actual, *np.percentile(placebo, [2.5, 97.5]), p_perm)
+    return {"actual_effect": actual, "permutation_p": p_perm, "n_permutations": n_perm,
+            "placebo_p2_5": float(np.percentile(placebo, 2.5)),
+            "placebo_p97_5": float(np.percentile(placebo, 97.5)),
+            "placebo_abs_max": float(np.abs(placebo).max())}
 
 
 def ward_change(p, wards):
@@ -125,6 +176,11 @@ def main():
 
     s = p_all[p_all.season == "summer"].groupby("year").agg(
         lst=("mean_lst_c", "mean"), green=("green_cover_pct", "mean"), ndvi=("mean_ndvi", "mean"))
+    placebo = placebo_a1(p) if p.est_pm25.notna().sum() > 50 else None
+    if placebo:
+        pd.DataFrame([placebo]).round(4).to_csv(cfg.OUT / "aq_placebo_test.csv", index=False)
+        print("\nA1 placebo (permutation) test:\n", pd.DataFrame([placebo]).round(3).to_string(index=False))
+
     summary = {
         "panel": {"ward_seasons_total": len(p_all), "in_sample": len(p), "wards": int(p.ward_id.nunique())},
         "models": res.to_dict("records"),
@@ -136,6 +192,7 @@ def main():
             (lambda m: (m.params["d_green_cover_pct"] * -10, m.bse["d_green_cover_pct"] * 10))(
                 smf.ols("d_lst_rel ~ d_green_cover_pct", data=ch.dropna(subset=["d_lst_rel", "d_green_cover_pct"])).fit(cov_type="HC1")))},
         "equity_spearman": eq,
+        "a1_placebo_test": placebo,
     }
     (cfg.OUT / "ward_results.json").write_text(json.dumps(summary, indent=2, default=float))
     print(json.dumps({k: summary[k] for k in ["panel", "city_summer_by_year", "wards_losing_green_gt2pp_pct",
