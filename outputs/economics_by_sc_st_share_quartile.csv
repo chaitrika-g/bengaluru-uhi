@@ -1,0 +1,5 @@
+sc_st_share_quartile,wards,population,pop_weighted_attrib_heat_c,share_of_total_warming_burden_pct,net_person_degc
+Q1 lowest,57.0,2157686.0,-0.0956,5.0953,-206342.8644
+Q2,56.0,2097428.0,0.0514,32.6667,107882.5348
+Q3,56.0,2117116.0,0.0508,35.3691,107622.0722
+Q4 highest,56.0,2076774.0,-0.0068,26.869,-14222.9589

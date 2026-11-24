@@ -1,0 +1,5 @@
+density_quartile,wards,population,pop_weighted_attrib_heat_c,share_of_total_warming_burden_pct,net_person_degc
+Q1 lowest,57.0,2157274.0,0.2217,73.3928,478212.8
+Q2,56.0,2118083.0,-0.0731,15.9336,-154755.6726
+Q3,56.0,2109228.0,-0.0621,9.7029,-130899.8828
+Q4 highest,56.0,2064419.0,-0.0957,0.9706,-197618.4609

@@ -293,6 +293,10 @@ In the code, `C(cell)` and `C(year)` in a formula create these fixed effects: `C
 | **Pigouvian levy** | A tax set equal to the harm an externality causes, to correct behaviour. |
 | **Hedonic pricing** | Inferring the value of a feature (for example, nearby parks) from how much more people pay for houses that have it. |
 | **Dose-response function** | How an outcome (productivity, deaths) changes per unit of exposure (per °C). |
+| **Attributable heat** | The part of a ward's warming that the model attributes to its change in green cover: green lost × cooling rate. It assumes the estimate is causal. |
+| **Person-°C** | Attributable heat × population. It measures the total heat *burden*: 0.5 °C for 10,000 people (5,000 person-°C) is a bigger burden than 1 °C for 1,000 people (1,000 person-°C). |
+| **Distributional analysis** | Asking *who* bears a cost (rich vs poor, dense vs sparse areas), not just how big the total is. A core question in welfare economics. |
+| **Extrapolation** | Using a model beyond the range of data it was estimated on. Here, the restoration estimates need +17 to +29 pp of green, while wards in the data changed by at most ±11 pp, so they are indicative only. |
 | **Discount rate** | How much less we value future benefits than present ones. Central to climate cost-benefit debates. |
 
 ---
@@ -317,6 +321,7 @@ bengaluru-uhi/
 **Two parts of the analysis:**
 - **Part A (city grid):** `composites.py` → `modis.py` → `analysis.py` → `figures.py`
 - **Part B (wards):** `wards.py` → `seasonal.py` → `air_quality.py` → `panel.py` → `ward_models.py` → `ward_maps.py`
+- **Part C (economics):** `economics.py`, which uses Part B's results
 
 ### Python libraries used
 | Library | Job |
@@ -501,6 +506,16 @@ Result: **2,250 rows** (225 wards × 5 years × 2 seasons), all passing.
 - **`equity()`** computes Spearman correlations of heat and green cover with SC/ST share and density, plus a quartile table.
 - **`main()`** writes `ward_model_results.csv`, `ward_change_2022_2026.csv`, `top10_heat_wards.csv`, `equity_by_scst_quartile.csv` and `ward_results.json`.
 
+### `src/economics.py`: the economics layer (step 6)
+Turns the ward results into economic quantities, using **only this project's own estimates**.
+1. **`coefficient()`** reads the summer cooling rate from `ward_model_results.csv` (model M2s): about **0.10 °C per percentage point** of green cover, with its 95 % CI (0.076–0.127). Every later number is computed three times (central, low, high) so the uncertainty carries through.
+2. **`attributable_heat()`**: for each ward, warming from green change = −(change in green cover) × cooling rate. Positive means the ward warmed because it lost green; negative means it cooled because it gained green. Multiplying by population gives **person-°C**.
+3. **`distribution()`** splits wards into quartiles by density and by SC/ST share, and computes the population-weighted attributable heat and **each quartile's share of the total warming burden**.
+4. **`restoration()`**: for every ward hotter than the city average, how much green cover would cool it back to the average: (ward temperature − city average) ÷ cooling rate, in pp. It converts that to **hectares** (1 pp of a ward's area = area in km² × 1 ha, because 1 km² = 100 ha) and compares it with today's green.
+5. **`figure()`** draws `fig6_economics.png`: the warming burden by density, and the hectares needed in the 10 hottest wards.
+
+**Why no rupee figure?** Published damage estimates (for example, about 2 % lower factory output per +1 °C of *air* temperature in India) use air temperature, while this project measures *surface* temperature, and there's no established conversion between them for Bengaluru. Multiplying them anyway would mean inventing a number, so it's left as a clearly stated next step.
+
 ### `src/ward_maps.py`: ward maps (step 5b)
 - **`interactive()`** builds `outputs/maps/ward_explorer.html` with Plotly:
   - a **dropdown** with 6 layers: summer LST, heat vs city average, green %, green change, relative warming, night LST;
@@ -520,6 +535,11 @@ Result: **2,250 rows** (225 wards × 5 years × 2 seasons), all passing.
 | `outputs/figures/fig3_timeseries.png` | Five summers: heat, green, night heat island |
 | `outputs/figures/fig4_green_vs_heat.png` | The core result: losing green → warming |
 | `outputs/figures/fig5_ward_maps.png` | Hottest wards, and green change by ward |
+| `outputs/figures/fig6_economics.png` | Who bears the heat, and the green cover needed to cool the hottest wards |
+| `outputs/economics_summary.json` | Headline economics numbers (with low/high ranges) |
+| `outputs/economics_ward_burden.csv` | Attributable heat and person-°C for every ward |
+| `outputs/economics_restoration.csv` | Green cover needed (pp and hectares) for every hotter-than-average ward |
+| `outputs/economics_by_density_quartile.csv`, `economics_by_sc_st_share_quartile.csv` | Who bears the burden |
 | `outputs/maps/ward_explorer.html` | Interactive ward map (open in a browser) |
 | `outputs/yearly_metrics.csv` | Part A: one row per year |
 | `outputs/results.json` | Part A: all model results |
@@ -544,6 +564,11 @@ Result: **2,250 rows** (225 wards × 5 years × 2 seasons), all passing.
 
 **Overall:** a **secondary, suggestive** finding. It is consistent across checks, but it's an association (construction may drive both green loss and dust) based on only 7–13 stations, 5 of 10 seasons, and large interpolation error.
 
+**The economics results, in plain English:**
+- **84 of 225 wards** (3.2 million people) lost enough green cover to warm by about **+0.24 °C** on average, and up to +1.1 °C in the worst ward.
+- **The least dense quarter of wards bears 73 % of that burden.** Green is being lost on the growing edge of the city, not in the old core.
+- **To cool the 10 hottest wards** to the city average would take roughly **+21 pp of green cover each** (17–29), about **3.6× their current green**, roughly 450 hectares in total. That's very large, which suggests greening alone can't fix these wards; other heat measures are needed too. It's an extrapolation, so treat it as an order of magnitude.
+
 **Example of reading a model row:** `M2s summer only: 10 pp green-cover loss -> °C | effect 1.017 | ci95 0.763–1.272 | p 0.000`
 → *"In summer, a ward that loses 10 percentage points of green cover becomes about 1 °C hotter, most likely between 0.76 and 1.27 °C, and this is very unlikely to be chance."*
 
@@ -557,8 +582,9 @@ Result: **2,250 rows** (225 wards × 5 years × 2 seasons), all passing.
 4. **"Why is the daytime heat island negative?"** In Bengaluru's pre-monsoon summer the surrounding farmland is dry and bare, and heats up faster than the city with its trees and lakes. The heat island appears at night.
 5. **"Why isn't PM2.5 in your heat regression?"** It doesn't drive surface temperature and is itself an outcome of urbanisation, so it would be a bad control. It's analysed separately.
 6. **"How do you know the PM2.5 result isn't an artefact of interpolation?"** I ran a permutation (placebo) test: shuffle station readings 200 times and compare the real effect with the shuffled ones. I also checked it with a fixed station set and with wards near a station. On fake random data, ordinary p-values were wrongly "significant" but the placebo test wasn't, which is why I rely on it.
-7. **"What are the limits?"** Surface vs air temperature, NDVI vs actual trees, only 5 years, MODIS's 1 km pixels vs small wards, Census-2011 population data, and correlation rather than a controlled experiment.
-8. **"What would you do next?"** Validate against IMD air temperatures, use tree-canopy data, link to income data, and convert °C into economic costs.
+7. **"Where's the economics?"** I turned the cooling estimate into a distributional analysis (who bears the heat: 73 % of the burden falls on the least dense, fringe wards) and a restoration requirement (the hottest wards would need about 3.6× their current green). I deliberately didn't monetise it, because published damage functions are per °C of air temperature and I measure surface temperature. Bridging that gap with weather-station data is my next step.
+8. **"What are the limits?"** Surface vs air temperature, NDVI vs actual trees, only 5 years, MODIS's 1 km pixels vs small wards, Census-2011 population data, and correlation rather than a controlled experiment.
+9. **"What would you do next?"** Validate against IMD air temperatures, use tree-canopy data, link to income data, and convert °C into economic costs.
 
 ---
 

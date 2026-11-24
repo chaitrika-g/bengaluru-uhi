@@ -69,6 +69,13 @@ By day, Bengaluru's built core was 1.0–3.8 °C *cooler* than the rural ring in
 6. **Fixed land-cover mask.** WorldCover 2021 is used for zoning, so new construction after 2021 is not reflected in the urban/rural masks.
 7. **Identification.** Two-way fixed effects rule out time-invariant and city-wide confounders, but not time-varying local ones (for example, construction both clearing trees and adding dark surfaces). β should be read as the heat associated with green loss *as it actually happened in Bengaluru*, development included, not the pure physical effect of a tree.
 
+## 6b. Part C: economics layer (src/economics.py)
+- **Cooling rate:** the summer ward-level fixed-effects coefficient (M2s), 0.102 °C per pp of green cover, with its 95 % CI (0.076–0.127) carried through every number.
+- **Attributable heat** = −(change in green cover, 2022–23 → 2025–26 summer) × cooling rate. **Person-°C** = attributable heat × ward population.
+- **Restoration requirement** = (ward LST − city mean LST, summer 2025–26) ÷ cooling rate, in pp. Converted to hectares: 1 pp of a ward's area = area in km² × 1 ha.
+- **Assumptions:** the coefficient is causal and constant across wards and magnitudes. Restoration values (17–29 pp) extrapolate beyond the observed ward changes (±11 pp).
+- **No monetisation:** published damage functions are per °C of air temperature; the surface-to-air conversion for Bengaluru is not yet established.
+
 ## 7. Part B: ward-level panel
 
 | Choice | Value | Why |

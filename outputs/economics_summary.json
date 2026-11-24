@@ -1,0 +1,22 @@
+{
+  "cooling_rate_c_per_pp": {
+    "central": 0.10174000000000001,
+    "ci95_low": 0.07632,
+    "ci95_high": 0.12716
+  },
+  "wards_with_attributable_warming": 84,
+  "people_in_those_wards": 3197703,
+  "pop_weighted_attrib_heat_c_city": -0.0005990311089070287,
+  "pop_weighted_attrib_heat_c_losing_wards": 0.23857705968410323,
+  "max_ward_attrib_heat_c": 1.1017017640000002,
+  "top10_hot_wards": {
+    "median_green_now_pct": 9.1928,
+    "median_green_needed_pp": 21.394240220169056,
+    "median_green_needed_pp_range": [
+      17.117411135577225,
+      28.52004716981132
+    ],
+    "total_green_needed_ha": 451.65754491841943,
+    "median_multiple_of_current_green": 3.5976335877648093
+  }
+}

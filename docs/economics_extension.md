@@ -32,6 +32,17 @@ Air-conditioning is an adaptation the rich can buy. The households most exposed 
 - **Pigouvian levies** on canopy removal, priced at the externality estimated above.
 - **Cost-benefit analysis** of urban afforestation, using a social discount rate. The choice of rate is a central debate in climate economics (Stern vs Nordhaus).
 
+## 4b. What has been done (src/economics.py)
+
+The first two economic steps are now implemented using only this project's estimates:
+- **Distribution of the burden:** attributable warming per ward (green-cover change × summer cooling rate), weighted by population. 3.2 million people live in wards that warmed about +0.24 °C on average from green loss, and the least dense quarter of wards bears 73 % of the burden.
+- **Restoration requirement:** the 10 hottest wards would need about +21 pp of green cover (17–29), about 3.6× today, ~450 ha, to reach the city-average temperature. This is an extrapolation beyond the observed ±11 pp ward changes.
+
+### Why there is no rupee figure yet, and how to get one
+1. **The missing link is surface vs air temperature.** Damage functions are estimated per degree of *air* temperature. One example is "annual plant output falls by about 2 % per degree Celsius" in Indian manufacturing, from the abstract of [Somanathan, Somanathan, Sudarshan & Tewari (2021), *JPE* 129(6)](https://epic.uchicago.edu/research/the-impact-of-temperature-on-productivity-and-labor-supply-evidence-from-indian-manufacturing/). Read the paper's methods section to confirm exactly which temperature measure it uses. This project measures *surface* temperature. The next step is to estimate the surface-to-air relationship for Bengaluru by pairing LST with IMD station air temperatures.
+2. **Exposure data:** ward-level employment or output (for example, from the Economic Census or ASI factory locations) is needed to turn "% productivity" into rupees.
+3. **Costs of the fix:** cost per hectare of urban greening, and land values in the hottest wards, for a cost-benefit comparison with alternatives such as cool roofs.
+
 ## 5. A concrete next-step research design
 
 1. Validate the LST results against IMD air-temperature stations.

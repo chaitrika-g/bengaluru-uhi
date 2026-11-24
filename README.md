@@ -82,6 +82,20 @@ The grid study above uses ~1 km cells. Part B repeats the analysis on the **225 
 - set it for one command only, with `OPENAQ_API_KEY=<your-key> bash run_all.sh`; or
 - drop a CPCB export into `data/raw/air_quality.csv` (columns `station, lat, lon, date, pm25`).
 
+## Part C: economics layer (who bears the heat, and the scale of the fix)
+
+[`src/economics.py`](src/economics.py) turns the summer ward estimate (≈ 0.10 °C per percentage point of green cover; 95 % CI 0.076–0.127) into two economic quantities. It uses **only this project's own estimates**; nothing is taken from outside.
+
+![Economics](outputs/figures/fig6_economics.png)
+
+1. **Who bears the heat (distribution).** 84 of 225 wards, home to **3.2 million people**, lost enough green cover since 2022–23 to warm by an estimated **+0.24 °C on average** (population-weighted; up to +1.1 °C in the worst ward). Across the whole city, losses and gains roughly cancel. But **the least dense quarter of wards carries 73 % of the warming burden**. Green loss is a problem of the developing urban fringe, not the old core. There is no clear gradient by SC/ST population share.
+2. **The scale of the fix (restoration requirement).** To cool the 10 hottest wards back to the city average, each would need about **+21 percentage points of green cover** (range 17–29). That's about **3.6× their current greenery**, roughly **450 hectares** in total. Wards like Muneshwara Nagar or Sunkadakatte would need more than 5× today's green. **Greening alone is unlikely to be enough** in these wards, so other heat measures belong in the policy comparison.
+
+**Caveats:**
+- These numbers assume the fixed-effects estimate is causal.
+- The restoration figures are an **extrapolation**. Observed ward changes were at most ±11 pp, and the cooling effect is assumed to stay proportional beyond that range (the 1 km grid, with changes up to about 37 pp, looks close to linear).
+- **No rupee figure is given.** Published damage estimates, such as ~2 % lower annual factory output per +1 °C in Indian manufacturing ([Somanathan et al. 2021, *JPE*](https://epic.uchicago.edu/research/the-impact-of-temperature-on-productivity-and-labor-supply-evidence-from-indian-manufacturing/)), are per degree of **air** temperature. This project measures **surface** temperature, and I found no established conversion for Indian cities. Monetising would mean inventing one. See [`docs/economics_extension.md`](docs/economics_extension.md) for the next steps.
+
 ## Why the design matters (the econometrics)
 
 Comparing green and grey neighbourhoods directly is misleading. Leafy areas such as Cubbon Park or Malleshwaram differ from industrial belts in many ways. So the core estimate uses a **two-way fixed-effects panel**:
